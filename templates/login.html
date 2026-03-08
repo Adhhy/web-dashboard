@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign In - Institutional Dashboard{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block header %}{% endblock %}
+
+{% block body_class %}login-page{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <h2 class="dashboard-title">Attendance Dashboard</h2>
+    <div class="login-wrapper">
+        <nav class="role-selection" aria-label="Role selection">
+            <button type="button" class="role-btn" data-role="student">Student</button>
+            <button type="button" class="role-btn" data-role="advisor">Advisor</button>
+            <button type="button" class="role-btn" data-role="teacher">Faculty</button>
+        </nav>
+        <div class="login-card">
+            <div class="login-header">
+                <h1>Sign In</h1>
+            </div>
+
+            <form id="login-form" class="login-form" method="POST">
+                <!-- Username -->
+                <div class="form-group">
+                    <label for="username">
+                        <svg class="label-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                        Username
+                    </label>
+                    <input type="text" id="username" name="username" placeholder="e.g. j.doe@institution.edu" required>
+                </div>
+
+                <!-- Password -->
+                <div class="form-group">
+                    <label for="password">
+                        <svg class="label-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                        Password
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                        <div id="toggle-password" class="password-toggle">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                style="width: 20px; height: 20px;">
+                                <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round"
+                                    stroke-linejoin="round" stroke-width="2"></path>
+                                <path
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                    stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login">Sign In to Dashboard</button>
+
+                <div id="error-message"></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/login.js') }}"></script>
+{% endblock %}

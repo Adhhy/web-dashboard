@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h2>Dashboard</h2>
+    <span class="user-greeting">Welcome, {{ session.username }} (Role: {{ session.role | capitalize }})</span>
+    <button id="logout-btn" class="btn-logout">Logout</button>
+</div>
+<p>Welcome to the Attendance Dashboard. This is a placeholder to confirm template inheritance is working.</p>
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
