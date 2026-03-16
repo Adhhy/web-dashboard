@@ -6,6 +6,9 @@ app = Flask(__name__)
 app.config.from_object(Config)
 app.register_blueprint(auth_bp)
 
+from routes.system_routes import system_bp
+app.register_blueprint(system_bp)
+
 @app.route('/dashboard')
 def dashboard():
     """Redirect to the role-specific dashboard if authenticated."""
@@ -39,7 +42,14 @@ def admin_dashboard():
     """Render the admin dashboard if authorized."""
     if 'user_id' not in session or session.get('role') != 'admin':
         return redirect(url_for('login'))
-    return render_template('dashboard.html')
+    return render_template('admin_dashboard.html', username=session.get('username'), role=session.get('role'))
+
+@app.route('/admin/dl_management')
+def admin_dl_management():
+    """Render the DL Management stub for admin users."""
+    if 'user_id' not in session or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    return render_template('admin_dl_management.html')
 
 @app.route('/')
 def login():

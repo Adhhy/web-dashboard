@@ -30,7 +30,10 @@ def login():
         session['role'] = role
         
         # Determine redirection URL based on role
-        redirect_url = f"/{role}/dashboard"
+        if role == 'admin':
+            redirect_url = "/admin/dashboard"
+        else:
+            redirect_url = f"/{role}/dashboard"
         
         return jsonify({
             "success": True,
@@ -55,3 +58,50 @@ def logout():
         "success": True,
         "message": "Successfully logged out."
     }), 200
+
+@auth_bp.route('/auth/change-password', methods=['POST'])
+def change_password():
+    """
+    Handle change password requests.
+    Expects JSON data: { "current_password": "...", "new_password": "...", "confirm_password": "..." }
+    """
+    if 'user_id' not in session:
+        return jsonify({
+            "success": False,
+            "message": "Unauthorized. Please log in."
+        }), 401
+
+    data = request.get_json()
+    
+    if not data or 'current_password' not in data or 'new_password' not in data or 'confirm_password' not in data:
+        return jsonify({
+            "success": False,
+            "message": "Missing required fields."
+        }), 400
+        
+    current_password = data.get('current_password')
+    new_password = data.get('new_password')
+    confirm_password = data.get('confirm_password')
+
+    if new_password != confirm_password:
+        return jsonify({
+            "success": False,
+            "message": "New password and confirm password do not match."
+        }), 400
+
+    user_id = session.get('user_id')
+    
+    success, message = AuthService.change_password(user_id, current_password, new_password)
+    
+    if success:
+        # Clear the session so they must log in again
+        session.clear()
+        return jsonify({
+            "success": True,
+            "message": message
+        }), 200
+    else:
+        return jsonify({
+            "success": False,
+            "message": message
+        }), 400

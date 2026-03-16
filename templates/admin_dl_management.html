@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}DL Management - Attendance Dashboard{% endblock %}
+
+{% block extra_styles %}
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+{% endblock %}
+
+{% block body_class %}bg-background-light dark:bg-slate-900 font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col items-center justify-center{% endblock %}
+
+{% block content %}
+<div class="text-center p-8 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 max-w-lg w-full">
+    <div class="flex justify-center mb-6 text-slate-400 dark:text-slate-500">
+        <span class="material-symbols-outlined text-6xl">construction</span>
+    </div>
+    <h1 class="text-2xl font-bold mb-4 text-slate-800 dark:text-slate-100">DL Management</h1>
+    <p class="text-slate-500 dark:text-slate-300 mb-8">This page is currently under construction. Please check back later.</p>
+    <a href="{{ url_for('admin_dashboard') }}" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+        <span class="material-symbols-outlined text-sm">arrow_back</span>
+        Return to Dashboard
+    </a>
+</div>
+{% endblock %}

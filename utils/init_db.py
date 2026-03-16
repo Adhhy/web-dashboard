@@ -30,6 +30,33 @@ def init_db():
         )
     ''')
     
+    # Create device_requests table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS device_requests (
+            id INTEGER PRIMARY KEY,
+            device_id TEXT NOT NULL,
+            device_name TEXT NOT NULL,
+            device_key TEXT NOT NULL,
+            ip_address TEXT,
+            status TEXT DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    # Create devices table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS devices (
+            id INTEGER PRIMARY KEY,
+            device_id TEXT NOT NULL UNIQUE,
+            device_name TEXT NOT NULL,
+            device_key TEXT NOT NULL,
+            ip_address TEXT,
+            connection_status TEXT DEFAULT 'connected',
+            approved_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
     # Check if admin already exists
     cursor.execute('SELECT id FROM users WHERE username = ?', ('admin',))
     if cursor.fetchone() is None:
