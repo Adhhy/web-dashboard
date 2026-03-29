@@ -1,12 +1,19 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="dashboard-header">
-    <h2>Dashboard</h2>
-    <span class="user-greeting">Welcome, {{ session.username }} (Role: {{ session.role | capitalize }})</span>
-    <button id="logout-btn" class="btn-logout">Logout</button>
+<div class="container py-8">
+    <div class="card p-6 flex justify-between items-center mb-8">
+        <div>
+            <h2 class="text-2xl font-bold">Dashboard</h2>
+            <p class="text-slate-500">Welcome, {{ session.username }} (Role: {{ session.role | capitalize }})</p>
+        </div>
+        <button id="logout-btn" class="btn btn-danger">Logout</button>
+    </div>
+    <div class="card p-6">
+        <p>Welcome to the Attendance Dashboard. This is a placeholder to confirm template inheritance is working.</p>
+    </div>
 </div>
-<p>Welcome to the Attendance Dashboard. This is a placeholder to confirm template inheritance is working.</p>
+
 
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}

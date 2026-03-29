@@ -1,0 +1,550 @@
+{% extends "base.html" %}
+
+{% block title %}Advisor Dashboard - Attendance Management System{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* Advisor Dashboard Specific Styles */
+    .status-strip {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .status-card {
+        background: var(--white);
+        padding: 1.25rem 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        border: 1px solid var(--slate-100);
+    }
+
+    .status-icon-wrapper {
+        background: var(--slate-50);
+        padding: 0.75rem;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary);
+    }
+
+    .status-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .status-label {
+        font-size: 0.75rem;
+        color: var(--slate-500);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    .status-value {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--slate-900);
+    }
+
+    /* Welcome Section */
+    .welcome-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .welcome-title {
+        font-size: 2.25rem;
+        font-weight: 800;
+        color: var(--slate-900);
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.025em;
+    }
+
+    .welcome-subtitle {
+        color: var(--slate-500);
+        font-weight: 500;
+    }
+
+    /* Session Control */
+    .session-panel {
+        background: var(--white);
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        padding: 1.5rem;
+        margin-bottom: 2.5rem;
+        border: 1px solid var(--slate-100);
+    }
+
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--slate-100);
+    }
+
+    .panel-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .status-badges {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .badge-active {
+        background-color: #ecfdf5;
+        color: #059669;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        display: flex;
+        align-items: center;
+    }
+
+    .started-at {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--slate-900);
+    }
+
+    .session-buttons {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .btn-control {
+        height: 120px;
+        border-radius: 12px;
+        border: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        font-weight: 600;
+    }
+
+    .btn-secondary-alt {
+        background-color: #f1f5f9;
+        color: #475569;
+    }
+
+    .btn-secondary-alt:hover {
+        background-color: #e2e8f0;
+    }
+
+    /* Logs Table */
+    .logs-panel {
+        background: var(--white);
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        margin-bottom: 3rem;
+        border: 1px solid var(--slate-100);
+        overflow: hidden;
+    }
+
+    .logs-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--slate-100);
+    }
+
+    .badge-stream {
+        background-color: #f0fdf4;
+        color: #16a34a;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+
+    .stream-dot {
+        width: 6px;
+        height: 6px;
+        background-color: #16a34a;
+        border-radius: 50%;
+        animation: pulse 1.5s infinite;
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+
+    th {
+        background-color: #f8fafc;
+        padding: 1rem 1.5rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--slate-500);
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid var(--slate-100);
+    }
+
+    td {
+        padding: 1rem 1.5rem;
+        font-size: 0.875rem;
+        color: var(--slate-700);
+        border-bottom: 1px solid var(--slate-100);
+        vertical-align: middle;
+    }
+
+    tr:nth-child(even) {
+        background-color: #fcfdfe;
+    }
+
+    tr:hover {
+        background-color: #f8fafc;
+    }
+
+    .rec-badge {
+        display: inline-flex;
+        padding: 0.25rem 0.625rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .success-badge { background-color: #ecfdf5; color: #059669; }
+    .warning-badge { background-color: #fffbeb; color: #d97706; }
+    .danger-badge { background-color: #fef2f2; color: #dc2626; }
+
+    .system-msg {
+        font-style: italic;
+        color: var(--slate-500);
+    }
+
+    .table-footer {
+        padding: 1rem 1.5rem;
+        background-color: #f8fafc;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.875rem;
+        color: var(--slate-500);
+    }
+
+    .view-all-link {
+        color: var(--primary);
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .view-all-link:hover {
+        text-decoration: underline;
+    }
+
+    .footer {
+        text-align: center;
+        padding: 2rem;
+        color: var(--slate-400);
+        font-size: 0.875rem;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.4; }
+        100% { opacity: 1; }
+    }
+
+    /* Session Control States */
+    .btn-disabled {
+        opacity: 0.5;
+        cursor: not-allowed !important;
+        pointer-events: none;
+    }
+
+    .badge-active {
+        background-color: #ecfdf5;
+        color: #059669;
+        border: 1px solid #d1fae5;
+    }
+
+    .badge-stopped, .badge-idle {
+        background-color: #f1f5f9;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-8">
+    
+    <!-- Status Info Strip -->
+    <div class="status-strip">
+        <div class="status-card">
+            <div class="status-icon-wrapper">
+                <span class="material-symbols-outlined">sensors</span>
+            </div>
+            <div class="status-info">
+                <span class="status-label">Face Engine Status</span>
+                <span class="status-value" style="color: {% if device_info.status == 'Connected' %}#22c55e{% else %}#ef4444{% endif %};">{{ device_info.status }}</span>
+            </div>
+        </div>
+        <div class="status-card">
+            <div class="status-icon-wrapper">
+                <span class="material-symbols-outlined">memory</span>
+            </div>
+            <div class="status-info">
+                <span class="status-label">Device Name</span>
+                <span class="status-value">{{ device_info.name }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Welcome Section -->
+    <section class="welcome-header">
+        <h2 class="welcome-title">Welcome, {{ advisor.name }}</h2>
+        <div class="welcome-subtitle">
+            Academic Advisor • Batch: <span class="text-slate-900 font-bold">{{ advisor.batch }}</span> / Dept: <span class="text-slate-900 font-bold">{{ advisor.department }}</span>
+        </div>
+    </section>
+
+    <!-- Session Control Panel -->
+    <div class="session-panel">
+        <div class="panel-header">
+            <div class="panel-title">
+                <span class="material-symbols-outlined text-primary">settings_applications</span>
+                Session Control Panel
+            </div>
+            <div class="status-badges">
+                {% if device_info.status == 'Connected' %}
+                    {% if session_info.status == 'active' %}
+                    <div class="badge-active flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold">
+                        <div class="size-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                        Status: ACTIVE
+                    </div>
+                    {% else %}
+                    <div class="badge-idle flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold">
+                        Status: IDLE
+                    </div>
+                    {% endif %}
+
+                    {% if session_info.status == 'active' and session_info.started_at %}
+                    <div class="started-at text-xs font-medium text-slate-500">
+                        Started at: <span class="text-slate-900">{{ session_info.started_at }}</span>
+                    </div>
+                    {% elif session_info.stopped_at %}
+                    <div class="started-at text-xs font-medium text-slate-500">
+                        Last Session: <span class="text-slate-900">{{ session_info.stopped_at }}</span>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div class="badge-idle flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold">
+                        Status: SYSTEM OFFLINE
+                    </div>
+                    <div class="started-at text-xs font-medium text-slate-500 italic">
+                        Session markers disabled when disconnected.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="session-buttons">
+            <button id="start-session-btn" 
+                    onclick="handleSession('start')"
+                    class="btn-control btn-secondary-alt {% if device_info.status != 'Connected' or session_info.status == 'active' %}btn-disabled{% endif %}"
+                    {% if device_info.status != 'Connected' or session_info.status == 'active' %}disabled{% endif %}>
+                <span class="material-symbols-outlined" style="font-size: 32px;">play_circle</span>
+                Start Session
+            </button>
+            <button id="stop-session-btn" 
+                    onclick="handleSession('stop')"
+                    class="btn-control btn-secondary-alt {% if device_info.status != 'Connected' or session_info.status != 'active' %}btn-disabled{% endif %}"
+                    {% if device_info.status != 'Connected' or session_info.status != 'active' %}disabled{% endif %}>
+                <span class="material-symbols-outlined" style="font-size: 32px;">stop_circle</span>
+                Stop Session
+            </button>
+            <button class="btn-control btn-secondary-alt">
+                <span class="material-symbols-outlined" style="font-size: 32px;">equalizer</span>
+                Calculate Session
+            </button>
+            <button class="btn-control btn-secondary-alt">
+                <span class="material-symbols-outlined" style="font-size: 32px;">assignment_turned_in</span>
+                Calculate Attendance
+            </button>
+        </div>
+    </div>
+
+    <!-- Logs Section -->
+    <div class="logs-panel">
+        <div class="logs-header">
+            <div class="panel-title">
+                <span class="material-symbols-outlined text-primary">assignment</span>
+                Logs
+            </div>
+            <div class="badge-stream">
+                <div class="stream-dot"></div>
+                Real-time Stream
+            </div>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Device</th>
+                        <th>Student ID / Name</th>
+                        <th>Recognition</th>
+                        <th>System Message</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>14:29:15.621</td>
+                        <td>Pi-01</td>
+                        <td>
+                            <div class="font-bold text-slate-900">STU-8829</div>
+                            <div class="text-xs text-slate-500">James Anderson</div>
+                        </td>
+                        <td>
+                            <span class="rec-badge success-badge">SUCCESS (86%)</span>
+                        </td>
+                        <td class="system-msg">Face matched successfully. Entry logged.</td>
+                    </tr>
+                    <tr>
+                        <td>14:19:42.115</td>
+                        <td>Pi-01</td>
+                        <td>
+                            <div class="font-bold text-slate-900">STU-1022</div>
+                            <div class="text-xs text-slate-500">Elena Rodriguez</div>
+                        </td>
+                        <td>
+                            <span class="rec-badge success-badge">SUCCESS (94%)</span>
+                        </td>
+                        <td class="system-msg">Face matched successfully. Entry logged.</td>
+                    </tr>
+                    <tr>
+                        <td>14:18:05.542</td>
+                        <td>Pi-01</td>
+                        <td>
+                            <div class="font-bold text-slate-900">Unknown</div>
+                            <div class="text-xs text-slate-500">Manual Check Required</div>
+                        </td>
+                        <td>
+                            <span class="rec-badge warning-badge">Low Confidence (62%)</span>
+                        </td>
+                        <td class="system-msg">Partial match found. Please verify manually.</td>
+                    </tr>
+                    <tr>
+                        <td>14:15:33.081</td>
+                        <td>Pi-01</td>
+                        <td>
+                            <div class="font-bold text-slate-900">STU-4410</div>
+                            <div class="text-xs text-slate-500">David Chen</div>
+                        </td>
+                        <td>
+                            <span class="rec-badge success-badge">SUCCESS (89%)</span>
+                        </td>
+                        <td class="system-msg">Face matched successfully. Entry logged.</td>
+                    </tr>
+                    <tr>
+                        <td>14:12:10.229</td>
+                        <td>Pi-01</td>
+                        <td>
+                            <div class="font-bold text-slate-900">STU-5561</div>
+                            <div class="text-xs text-slate-500">Sophie Müller</div>
+                        </td>
+                        <td>
+                            <span class="rec-badge danger-badge">Failed/Unknown</span>
+                        </td>
+                        <td class="system-msg">Face matched successfully. Entry logged.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="table-footer">
+            <span>Showing 8 of 142 total entries for current session</span>
+            <a href="#" class="view-all-link">View All Logs</a>
+        </div>
+    </div>
+
+    <!-- Footer Decoration -->
+    <footer class="footer">
+        © 2024 Attendance Management System. All rights reserved.
+    </footer>
+
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Button click logs
+        const buttons = document.querySelectorAll('.btn-control:not(#start-session-btn):not(#stop-session-btn)');
+        buttons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const action = btn.innerText.trim();
+                console.log(`Advisor Action: ${action} initiated.`);
+            });
+        });
+    });
+
+    async function handleSession(action) {
+        const url = `/api/session/${action}`;
+        const btn = document.getElementById(`${action}-session-btn`);
+        
+        // Prevent double-clicks
+        if (btn.classList.contains('btn-disabled')) return;
+
+        // Visual indicator
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<span class="material-symbols-outlined animate-spin" style="font-size: 32px;">sync</span> Processing...';
+        btn.classList.add('btn-disabled');
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Reload to reflect all state changes (including badges and device commands)
+                window.location.reload();
+            } else {
+                alert('Action failed: ' + result.message);
+                // Revert visual state
+                btn.innerHTML = originalHtml;
+                btn.classList.remove('btn-disabled');
+            }
+        } catch (error) {
+            console.error(`Session ${action} error:`, error);
+            alert(`An error occurred while ${action}ing the session.`);
+            // Revert visual state
+            btn.innerHTML = originalHtml;
+            btn.classList.remove('btn-disabled');
+        }
+    }
+</script>
+{% endblock %}

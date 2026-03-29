@@ -214,9 +214,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderConnectionsList() {
         if (connectedDevices.length === 0) {
             connectionsList.innerHTML = `
-                <div class="px-6 py-8 text-center bg-slate-50/50 dark:bg-slate-800/20">
-                    <span class="material-symbols-outlined text-4xl text-slate-300 dark:text-slate-600 mb-2">devices</span>
-                    <p class="text-sm font-medium text-slate-500 dark:text-slate-400">No devices connected</p>
+                <div class="px-6 py-8 text-center bg-slate-50">
+                    <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">devices</span>
+                    <p class="text-sm font-medium text-slate-500">No devices connected</p>
                 </div>
             `;
             return;
@@ -224,27 +224,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
         connectionsList.innerHTML = connectedDevices.map(device => {
             const isOnline = device.connection_status === 'connected';
-            const statusColor = isOnline ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600';
+            const statusColor = isOnline ? 'bg-green-500' : 'bg-slate-300';
             const statusText = isOnline ? 'Online' : 'Offline';
             const icon = getDeviceIcon(device.device_name);
 
             return `
-                <div class="px-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors py-5 cursor-pointer" onclick="openDeviceInfo('${device.device_id}')">
+                <div class="px-6 flex items-center justify-between hover:bg-slate-50 transition-colors py-5 cursor-pointer" onclick="openDeviceInfo('${device.device_id}')">
                     <div class="flex items-center gap-4">
                         <div class="size-10 bg-primary/5 rounded-lg flex items-center justify-center text-primary">
                             <span class="material-symbols-outlined">${icon}</span>
                         </div>
                         <div>
-                            <p class="text-sm font-semibold text-slate-900 dark:text-white">${device.device_name}</p>
+                            <p class="text-sm font-semibold text-slate-900">${device.device_name}</p>
                             <p class="text-xs text-slate-500">ID: ${device.device_id}</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-6">
                         <div class="flex items-center gap-2">
                             <span class="size-2 rounded-full ${statusColor}"></span>
-                            <span class="text-xs font-medium text-slate-600 dark:text-slate-400">${statusText}</span>
+                            <span class="text-xs font-medium text-slate-600">${statusText}</span>
                         </div>
-                        <button class="text-slate-400 hover:text-primary transition-colors focus:outline-none" title="View details">
+                        <button class="text-slate-400 hover:text-primary transition-colors border-none bg-transparent cursor-pointer" title="View details">
                             <span class="material-symbols-outlined">chevron_right</span>
                         </button>
                     </div>
@@ -274,7 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const isOnline = device.connection_status === 'connected';
             infoDeviceStatus.textContent = isOnline ? 'Connected' : 'Disconnected';
-            infoStatusIndicator.className = `size-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600'}`;
+            infoStatusIndicator.className = `size-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-slate-300'}`;
             
             infoDeviceApproval.textContent = new Date(device.approved_timestamp).toLocaleString();
             

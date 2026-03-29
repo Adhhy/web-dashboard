@@ -57,6 +57,53 @@ def init_db():
         )
     ''')
     
+    # Create advisors table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS advisors (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            department TEXT NOT NULL,
+            batch TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    ''')
+    
+    # Create sessions table
+    # status: idle, active, stopped
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            status TEXT DEFAULT 'idle',
+            started_at TIMESTAMP,
+            stopped_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    # Create device_commands table
+    # command: start_camera, stop_camera, idle
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS device_commands (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            device_id TEXT NOT NULL UNIQUE,
+            command TEXT DEFAULT 'idle',
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    # Initialize/Reset session if exists
+    cursor.execute('SELECT id FROM sessions LIMIT 1')
+    if cursor.fetchone() is None:
+        cursor.execute("INSERT INTO sessions (status) VALUES ('idle')")
+    else:
+        # Force current session to idle on initialization
+        cursor.execute("UPDATE sessions SET status = 'idle', stopped_at = CURRENT_TIMESTAMP WHERE status != 'idle'")
+    
+    # Initialize/Reset command state to idle
+    cursor.execute("UPDATE device_commands SET command = 'idle'")
+    
     # Check if admin already exists
     cursor.execute('SELECT id FROM users WHERE username = ?', ('admin',))
     if cursor.fetchone() is None:
