@@ -26,16 +26,7 @@ class AuthService:
             if not users:
                 return False, "Invalid username or password.", None, None
                 
-            # 1. Check for Admin override (if any entry for this username is admin)
-            for user in users:
-                if user['role'] == 'admin':
-                    if check_password_hash(user['password_hash'], password):
-                        return True, "Admin authentication successful.", user['id'], 'admin'
-                    else:
-                        # If matches admin username but wrong password, fail early
-                        return False, "Invalid username or password.", None, None
-
-            # 2. Check for matching selected_role
+            # Only check for matching selected_role (including explicit 'admin')
             for user in users:
                 if user['role'] == selected_role:
                     if check_password_hash(user['password_hash'], password):
@@ -43,7 +34,7 @@ class AuthService:
                     else:
                         return False, "Invalid username or password.", None, None
             
-            # If username exists but role doesn't match and no admin override
+            # If username exists but role doesn't match
             return False, f"User is not authorized as {selected_role}.", None, None
                 
         except Exception as e:

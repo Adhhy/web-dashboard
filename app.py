@@ -1,10 +1,12 @@
 from flask import Flask, render_template, session, redirect, url_for, jsonify
 from config import Config
 from auth.auth_handler import auth_bp
+from attendance import attendance_bp
 
 app = Flask(__name__)
 app.config.from_object(Config)
 app.register_blueprint(auth_bp)
+app.register_blueprint(attendance_bp)
 
 from routes.system_routes import system_bp
 app.register_blueprint(system_bp)

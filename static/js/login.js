@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Enforce role selection
             if (!selectedRole) {
-                errorMessage.textContent = 'Please select a role (Student, Advisor, or Faculty) before signing in.';
+                errorMessage.textContent = 'Please select a role (Student, Advisor, Faculty, or Admin) before signing in.';
                 return;
             }
 

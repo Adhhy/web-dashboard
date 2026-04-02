@@ -14,3 +14,4 @@ class Config:
     
     DEBUG = True
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-key-123')
+    ATTENDANCE_THRESHOLD_MINUTES = 35
