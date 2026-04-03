@@ -36,8 +36,8 @@ def add_user():
     
     password_hash = generate_password_hash(password)
     
-    # Advisor-specific details
-    advisor_details = None
+    # Profile Details (Advisor/Student-specific)
+    profile_details = None
     if role == 'advisor':
         print("\nAdvisor Profile Details:")
         name = input("Enter Advisor Full Name: ").strip()
@@ -47,7 +47,19 @@ def add_user():
         if not name or not dept or not batch:
             print("Error: Name, Department, and Batch are required for advisors.")
             return
-        advisor_details = (name, dept, batch)
+        profile_details = (name, dept, batch)
+        
+    elif role == 'student':
+        print("\nStudent Profile Details:")
+        name = input("Enter Student Full Name: ").strip()
+        student_id = input("Enter Student Roll Number/ID (unique): ").strip()
+        dept = input("Enter Department: ").strip()
+        batch = input("Enter Batch: ").strip()
+        
+        if not name or not student_id or not dept or not batch:
+            print("Error: All profile details are required for students.")
+            return
+        profile_details = (name, student_id, dept, batch)
     
     try:
         conn = sqlite3.connect(db_path)
@@ -63,17 +75,33 @@ def add_user():
         
         user_id = cursor.lastrowid
         
-        if role == 'advisor' and advisor_details:
+        if role == 'advisor' and profile_details:
             cursor.execute('''
                 INSERT INTO advisors (user_id, name, department, batch)
                 VALUES (?, ?, ?, ?)
-            ''', (user_id, *advisor_details))
+            ''', (user_id, *profile_details))
+            
+        elif role == 'student' and profile_details:
+            name, student_id, dept, batch = profile_details
+            cursor.execute('''
+                INSERT INTO students (user_id, student_id, name, department, batch)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (user_id, student_id, name, dept, batch))
+            
+            # Initialize cumulative attendance for all subjects in timetable
+            cursor.execute("SELECT DISTINCT subject_code FROM timetable WHERE subject_code IS NOT NULL")
+            subjects = cursor.fetchall()
+            for (subject,) in subjects:
+                cursor.execute('''
+                    INSERT OR IGNORE INTO main_attendance (student_id, subject_code, present_count, duty_leave_count, total_count)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (student_id, subject, 0, 0, 0))
             
         conn.commit()
         conn.close()
         print(f"User '{username}' with role '{role}' added successfully.")
-        if role == 'advisor':
-            print(f"Advisor profile created for '{advisor_details[0]}'.")
+        if role in ['advisor', 'student']:
+            print(f"Profile created for '{profile_details[0]}'.")
     except Exception as e:
         if 'conn' in locals():
             conn.rollback()

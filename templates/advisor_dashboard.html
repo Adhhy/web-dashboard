@@ -436,7 +436,9 @@
                 <span class="material-symbols-outlined" style="font-size: 32px;">equalizer</span>
                 Calculate Session
             </button>
-            <button class="btn-control btn-secondary-alt">
+            <button id="calc-att-btn" 
+                    onclick="handleCalculateAttendance()"
+                    class="btn-control btn-secondary-alt">
                 <span class="material-symbols-outlined" style="font-size: 32px;">assignment_turned_in</span>
                 Calculate Attendance
             </button>
@@ -592,6 +594,35 @@
             console.error('Finalize error:', error);
             alert('An error occurred during finalization.');
             btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 32px;">equalizer</span> Calculate Session';
+            btn.classList.remove('processing');
+        }
+    }
+
+    async function handleCalculateAttendance() {
+        const btn = document.getElementById('calc-att-btn');
+        if (btn.classList.contains('processing')) return;
+
+        if (!confirm("Are you sure you want to calculate final cumulative attendance for this session? This will move data to history and clear the session table.")) return;
+
+        btn.innerHTML = '<span class="material-symbols-outlined animate-spin" style="font-size: 32px;">sync</span> Processing...';
+        btn.classList.add('processing');
+
+        try {
+            const response = await fetch('/api/attendance/calculate', { method: 'POST' });
+            const result = await response.json();
+
+            if (result.success) {
+                alert(result.message);
+                window.location.reload();
+            } else {
+                alert('Calculation failed: ' + result.message);
+                btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 32px;">assignment_turned_in</span> Calculate Attendance';
+                btn.classList.remove('processing');
+            }
+        } catch (error) {
+            console.error('Calculation error:', error);
+            alert('An error occurred during calculation.');
+            btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 32px;">assignment_turned_in</span> Calculate Attendance';
             btn.classList.remove('processing');
         }
     }

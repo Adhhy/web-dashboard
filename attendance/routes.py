@@ -116,4 +116,38 @@ def finalize_session():
             "success": False, 
             "message": f"Finalization of {target_session} failed. Check system logs."
         }), 500
+@attendance_bp.route('/api/attendance/calculate', methods=['POST'])
+@advisor_required
+def calculate_attendance():
+    """Trigger the subject-wise calculation for the target session."""
+    from attendance.calculator import AttendanceCalculator
+    from datetime import datetime
+    
+    now = datetime.now()
+    today = now.strftime('%Y-%m-%d')
+    
+    # 1. Determine target session (similar to finalize_session logic)
+    target_session = None
+    
+    # Morning check
+    if not AttendanceCalculator.is_session_calculated("Morning", today):
+        # We assume calculation is allowed after session finalization
+        # Here we check if records exist in morning_attendance to process
+        target_session = "Morning"
+    else:
+        # If Morning is done, check for Afternoon
+        if not AttendanceCalculator.is_session_calculated("Afternoon", today):
+            target_session = "Afternoon"
+        else:
+            return jsonify({
+                "success": False, 
+                "message": "Both sessions for today have already been calculated into the main records."
+            }), 400
 
+    # 2. Process Calculation
+    result = AttendanceCalculator.process_session(target_session, today)
+    
+    if result['success']:
+        return jsonify(result), 200
+    else:
+        return jsonify(result), 400
