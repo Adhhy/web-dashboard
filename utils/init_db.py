@@ -70,6 +70,28 @@ def init_db():
         )
     ''')
     
+    # Create teachers table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS teachers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            department TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    ''')
+
+    # Create teacher_subjects map table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS teacher_subjects (
+            user_id INTEGER NOT NULL,
+            subject_code TEXT NOT NULL,
+            PRIMARY KEY (user_id, subject_code),
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    ''')
+    
     # Create sessions table
     # status: idle, active, stopped
     cursor.execute('''

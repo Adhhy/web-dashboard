@@ -13,13 +13,39 @@ def init_schema():
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
+    # 0. Create Subjects Table
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS subjects (
+        code TEXT PRIMARY KEY,
+        full_name TEXT NOT NULL,
+        credits INTEGER,
+        semester INTEGER,
+        subject_type TEXT,
+        short_code TEXT UNIQUE
+    )
+    ''')
+    
+    # Preload Exact Subjects mapping per KTU
+    subjects_data = [
+        ('CST302', 'Compiler Design', 4, 6, 'Core', 'CD'),
+        ('CST304', 'Computer Graphics and Image Processing', 4, 6, 'Core', 'CGIP'),
+        ('CST306', 'Algorithm Analysis and Design', 4, 6, 'Core', 'AAD'),
+        ('CST362', 'Programming in Python', 3, 6, 'Elective', 'PE'),
+        ('HUT300', 'Industrial Economics and Foreign Trade', 3, 6, 'Humanities', 'IEFT'),
+        ('CST308', 'Comprehensive Course Work', 1, 6, 'Lab', 'CCW'),
+        ('CSL332', 'Networking Lab', 2, 6, 'Lab', None),
+        ('CSD334', 'Mini Project', 2, 6, 'Project', None)
+    ]
+    cursor.executemany("INSERT OR IGNORE INTO subjects VALUES (?, ?, ?, ?, ?, ?)", subjects_data)
+
     # 1. Create Timetable Table
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS timetable (
         day TEXT,
         period INTEGER,
         subject_code TEXT,
-        PRIMARY KEY (day, period)
+        PRIMARY KEY (day, period),
+        FOREIGN KEY (subject_code) REFERENCES subjects(short_code)
     )
     ''')
     
@@ -29,6 +55,7 @@ def init_schema():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER UNIQUE NOT NULL,
         student_id TEXT UNIQUE NOT NULL,
+        ktu_id TEXT,
         name TEXT NOT NULL,
         batch TEXT,
         department TEXT,
@@ -45,7 +72,8 @@ def init_schema():
         present_count INTEGER DEFAULT 0,
         duty_leave_count INTEGER DEFAULT 0,
         total_count INTEGER DEFAULT 0,
-        PRIMARY KEY (student_id, subject_code)
+        PRIMARY KEY (student_id, subject_code),
+        FOREIGN KEY (subject_code) REFERENCES subjects(short_code)
     )
     ''')
     
@@ -71,7 +99,57 @@ def init_schema():
     )
     ''')
     
-    # 6. Populate Timetable from hardcoded SQL-like data
+    # 6. Create Policy Logs Table
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS policy_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, 
+        session_id INTEGER, 
+        device_id TEXT, 
+        student_id TEXT, 
+        student_name TEXT, 
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, 
+        date TEXT, 
+        event_type TEXT, 
+        period TEXT, 
+        session_type TEXT, 
+        recognition_status TEXT, 
+        late_entry BOOLEAN DEFAULT 0, 
+        bus_delay BOOLEAN DEFAULT 0, 
+        status TEXT, 
+        system_message TEXT, 
+        advisor_id INTEGER, 
+        action_timestamp DATETIME, 
+        FOREIGN KEY(session_id) REFERENCES sessions(id), 
+        FOREIGN KEY(advisor_id) REFERENCES users(id)
+    )
+    ''')
+    
+    # 7. Create Morning Attendance Table
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS morning_attendance (
+        student_id TEXT, 
+        date TEXT, 
+        P1 TEXT DEFAULT 'A', 
+        P2 TEXT DEFAULT 'A', 
+        P3 TEXT DEFAULT 'A', 
+        P4 TEXT DEFAULT 'A', 
+        PRIMARY KEY(student_id, date)
+    )
+    ''')
+    
+    # 8. Create Afternoon Attendance Table
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS afternoon_attendance (
+        student_id TEXT, 
+        date TEXT, 
+        P5 TEXT DEFAULT 'A', 
+        P6 TEXT DEFAULT 'A', 
+        P7 TEXT DEFAULT 'A', 
+        PRIMARY KEY(student_id, date)
+    )
+    ''')
+    
+    # 10. Populate Timetable from hardcoded SQL-like data
     timetable_data = [
         ('MONDAY', 1, 'AAD'), ('MONDAY', 2, 'IEFT'), ('MONDAY', 3, 'PE'), ('MONDAY', 4, 'CGIP'),
         ('MONDAY', 5, 'CD'), ('MONDAY', 6, 'AAD'), ('MONDAY', 7, 'CD'),

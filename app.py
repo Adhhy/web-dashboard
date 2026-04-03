@@ -18,14 +18,40 @@ def dashboard():
         return redirect(url_for('login'))
     return redirect(url_for(f"{session['role']}_dashboard"))
 
+from utils.helpers import get_advisor_details, get_active_device, get_session_info, update_session_state, get_device_command, get_student_details, get_student_attendance, get_teacher_details, get_teacher_dashboard_data
+
 @app.route('/student/dashboard')
 def student_dashboard():
     """Render the student dashboard if authorized."""
-    if 'user_id' not in session or session.get('role') != 'student':
+    user_id = session.get('user_id')
+    role = session.get('role')
+    
+    if not user_id or role != 'student':
         return redirect(url_for('login'))
-    return render_template('dashboard.html')
+        
+    student = get_student_details(user_id)
+    device_info = get_active_device()
+    
+    if not student:
+        return "Student profile not found. Please contact an admin.", 404
+        
+    subjects_data = get_student_attendance(student['student_id'])
+    
+    # Calculate overall stats
+    total_conducted = sum(s['conducted'] for s in subjects_data)
+    total_attended = sum(s['attended'] for s in subjects_data)
+    total_absent = total_conducted - total_attended
+    overall_percentage = round((total_attended / total_conducted * 100) if total_conducted > 0 else 0)
+    
+    return render_template('dashboard.html', 
+                           student=student, 
+                           device_info=device_info, 
+                           subjects=subjects_data,
+                           total_conducted=total_conducted,
+                           total_attended=total_attended,
+                           total_absent=total_absent,
+                           overall_percentage=overall_percentage)
 
-from utils.helpers import get_advisor_details, get_active_device, get_session_info, update_session_state, get_device_command
 
 @app.route('/advisor/dashboard')
 def advisor_dashboard():
@@ -105,9 +131,21 @@ def advisor_duty_leave():
 @app.route('/teacher/dashboard')
 def teacher_dashboard():
     """Render the teacher dashboard if authorized."""
-    if 'user_id' not in session or session.get('role') != 'teacher':
+    user_id = session.get('user_id')
+    if not user_id or session.get('role') != 'teacher':
         return redirect(url_for('login'))
-    return render_template('dashboard.html')
+        
+    device_info = get_active_device()
+    teacher = get_teacher_details(user_id)
+    dashboard_data = get_teacher_dashboard_data(user_id)
+    
+    if not teacher:
+        return "Teacher profile not found. Please contact the administrator.", 404
+        
+    return render_template('teacher_dashboard.html',
+                         device_info=device_info,
+                         teacher=teacher,
+                         dashboard_data=dashboard_data)
 
 @app.route('/admin/dashboard')
 def admin_dashboard():

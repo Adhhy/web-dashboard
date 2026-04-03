@@ -52,14 +52,41 @@ def add_user():
     elif role == 'student':
         print("\nStudent Profile Details:")
         name = input("Enter Student Full Name: ").strip()
+        ktu_id = input("Enter KTU ID: ").strip()
         student_id = input("Enter Student Roll Number/ID (unique): ").strip()
         dept = input("Enter Department: ").strip()
         batch = input("Enter Batch: ").strip()
         
-        if not name or not student_id or not dept or not batch:
+        if not name or not ktu_id or not student_id or not dept or not batch:
             print("Error: All profile details are required for students.")
             return
-        profile_details = (name, student_id, dept, batch)
+        profile_details = (name, student_id, ktu_id, dept, batch)
+        
+    elif role == 'teacher':
+        print("\nTeacher Profile Details:")
+        name = input("Enter Teacher Full Name: ").strip()
+        dept = input("Enter Department: ").strip()
+        
+        try:
+            temp_conn = sqlite3.connect(db_path)
+            temp_cursor = temp_conn.cursor()
+            temp_cursor.execute("SELECT short_code, full_name FROM subjects")
+            avail_subs = temp_cursor.fetchall()
+            temp_conn.close()
+            print("\nAvailable Subjects:")
+            for scode, sname in avail_subs:
+                print(f" - {scode}: {sname}")
+        except Exception:
+            pass
+            
+        subjects_input = input("\nEnter Subjects Handled (comma separated short_codes, e.g. CD, PE): ").strip()
+        
+        if not name or not dept:
+            print("Error: Name and Department are required for teachers.")
+            return
+            
+        subjects_list = [s.strip() for s in subjects_input.split(',')] if subjects_input else []
+        profile_details = (name, dept, subjects_list)
     
     try:
         conn = sqlite3.connect(db_path)
@@ -82,11 +109,11 @@ def add_user():
             ''', (user_id, *profile_details))
             
         elif role == 'student' and profile_details:
-            name, student_id, dept, batch = profile_details
+            name, student_id, ktu_id, dept, batch = profile_details
             cursor.execute('''
-                INSERT INTO students (user_id, student_id, name, department, batch)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (user_id, student_id, name, dept, batch))
+                INSERT INTO students (user_id, student_id, ktu_id, name, department, batch)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (user_id, student_id, ktu_id, name, dept, batch))
             
             # Initialize cumulative attendance for all subjects in timetable
             cursor.execute("SELECT DISTINCT subject_code FROM timetable WHERE subject_code IS NOT NULL")
@@ -96,6 +123,20 @@ def add_user():
                     INSERT OR IGNORE INTO main_attendance (student_id, subject_code, present_count, duty_leave_count, total_count)
                     VALUES (?, ?, ?, ?, ?)
                 ''', (student_id, subject, 0, 0, 0))
+                
+        elif role == 'teacher' and profile_details:
+            name, dept, subjects_list = profile_details
+            cursor.execute('''
+                INSERT INTO teachers (user_id, name, department)
+                VALUES (?, ?, ?)
+            ''', (user_id, name, dept))
+            
+            for subject in subjects_list:
+                if subject:
+                    cursor.execute('''
+                        INSERT OR IGNORE INTO teacher_subjects (user_id, subject_code)
+                        VALUES (?, ?)
+                    ''', (user_id, subject))
             
         conn.commit()
         conn.close()

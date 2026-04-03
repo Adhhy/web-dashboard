@@ -54,8 +54,13 @@
                         <a class="nav-link {% if request.endpoint == 'advisor_dashboard' %}active{% else %}inactive{% endif %}" href="{{ url_for('advisor_dashboard') }}">Home</a>
                         <a class="nav-link {% if request.endpoint == 'advisor_manage' %}active{% else %}inactive{% endif %}" href="{{ url_for('advisor_manage') }}">Manage</a>
                         <a class="nav-link {% if request.endpoint == 'advisor_duty_leave' %}active{% else %}inactive{% endif %}" href="{{ url_for('advisor_duty_leave') }}">Duty Leave</a>
+                    {% elif session.get('role') == 'teacher' %}
+                        <a class="nav-link {% if request.endpoint in ['teacher_dashboard'] %}active{% else %}inactive{% endif %}" href="{{ url_for('teacher_dashboard') }}">Home</a>
+                        <a class="nav-link inactive" href="#">Manage</a>
+                        <a class="nav-link inactive" href="#">Duty Leave</a>
                     {% else %}
-                        <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% else %}inactive{% endif %}" href="{{ url_for('dashboard') }}">Home</a>
+                        <a class="nav-link {% if request.endpoint in ['dashboard', 'student_dashboard'] %}active{% else %}inactive{% endif %}" href="{{ url_for('dashboard') }}">Home</a>
+                        <a class="nav-link inactive" href="#">Duty Leave</a>
                     {% endif %}
                 </nav>
                 <!-- Right Side: Profile Dropdown -->

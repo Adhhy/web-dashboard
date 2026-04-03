@@ -1,19 +1,467 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard - Attendance Dashboard{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* Student Dashboard specific styles */
+    .status-strip {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .status-card {
+        background: var(--white);
+        padding: 1.25rem 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        border: 1px solid var(--slate-100);
+    }
+
+    .status-icon-wrapper {
+        background: var(--slate-50);
+        padding: 0.75rem;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary);
+    }
+
+    .status-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .status-label {
+        font-size: 0.75rem;
+        color: var(--slate-500);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    .status-value {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--slate-900);
+    }
+
+    .welcome-header {
+        text-align: center;
+        margin-bottom: 2.5rem;
+    }
+
+    .welcome-title {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--slate-900);
+        margin-bottom: 0.25rem;
+        letter-spacing: -0.025em;
+    }
+
+    .welcome-subtitle {
+        color: var(--slate-500);
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+    /* Overall Stats */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .stat-box {
+        background: var(--white);
+        padding: 1.5rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        border: 1px solid var(--slate-100);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .stat-main {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stat-label {
+        color: var(--slate-500);
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--slate-900);
+        line-height: 1;
+    }
+
+    .stat-icon {
+        color: var(--primary);
+        background: var(--primary-light, #e0e7ff);
+        padding: 0.75rem;
+        border-radius: 12px;
+    }
+
+    /* Subjects Horizontal Scroll */
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--slate-900);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .subjects-scroll-container {
+        display: flex;
+        gap: 1.25rem;
+        overflow-x: auto;
+        padding-top: 0.5rem;
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
+        /* Scrollbar hiding for cleaner look */
+        scrollbar-width: thin;
+        scrollbar-color: var(--slate-300) transparent;
+    }
+    
+    .subjects-scroll-container::-webkit-scrollbar {
+        height: 6px;
+    }
+    .subjects-scroll-container::-webkit-scrollbar-thumb {
+        background-color: var(--slate-300);
+        border-radius: 3px;
+    }
+
+    .subject-card {
+        background: var(--white);
+        min-width: 200px;
+        flex: 0 0 auto;
+        padding: 1.25rem;
+        border-radius: 12px;
+        border: 1px solid var(--slate-200);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .subject-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-3px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+    }
+    
+    .subject-card.active {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 1px var(--primary);
+        background: #f8fafc;
+    }
+
+    .sub-icon-box {
+        display: inline-flex;
+        padding: 0.5rem;
+        border-radius: 8px;
+        border: 1px solid var(--slate-200);
+        margin-bottom: 1rem;
+        color: var(--slate-600);
+    }
+
+    .sub-name {
+        font-weight: 700;
+        font-size: 1rem;
+        color: var(--slate-900);
+        margin-bottom: 0.25rem;
+    }
+
+    .sub-meta {
+        font-size: 0.75rem;
+        color: var(--slate-500);
+    }
+
+    /* Detailed Report */
+    .detailed-report {
+        background: var(--slate-100);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 3rem;
+    }
+    
+    .report-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        color: var(--slate-800);
+        margin-bottom: 1.5rem;
+    }
+    
+    .report-header-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: var(--primary);
+    }
+
+    .report-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .report-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding-right: 1.5rem;
+        border-right: 1px solid var(--slate-300);
+    }
+    
+    .report-item:last-child {
+        border-right: none;
+    }
+
+    .r-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--slate-600);
+        margin-bottom: 0.5rem;
+    }
+
+    .r-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--slate-900);
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+
+    .r-sub {
+        font-size: 0.75rem;
+        color: var(--slate-500);
+    }
+    
+    .r-icon {
+        color: var(--slate-600);
+    }
+
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container py-8">
-    <div class="card p-6 flex justify-between items-center mb-8">
-        <div>
-            <h2 class="text-2xl font-bold">Dashboard</h2>
-            <p class="text-slate-500">Welcome, {{ session.username }} (Role: {{ session.role | capitalize }})</p>
+<div class="container" style="padding-top: 0.5rem;">
+
+    <!-- Top Status Strip -->
+    <div class="status-strip">
+        <div class="status-card">
+            <div class="status-icon-wrapper">
+                <span class="material-symbols-outlined">sensors</span>
+            </div>
+            <div class="status-info">
+                <span class="status-label">Face Engine Status</span>
+                <span class="status-value" style="color: {% if device_info.status == 'Connected' %}#22c55e{% else %}#ef4444{% endif %};">{{ device_info.status }}</span>
+            </div>
         </div>
-        <button id="logout-btn" class="btn btn-danger">Logout</button>
+        <div class="status-card">
+            <div class="status-icon-wrapper">
+                <span class="material-symbols-outlined">memory</span>
+            </div>
+            <div class="status-info">
+                <span class="status-label">Device Name</span>
+                <span class="status-value">{{ device_info.name }}</span>
+            </div>
+        </div>
     </div>
-    <div class="card p-6">
-        <p>Welcome to the Attendance Dashboard. This is a placeholder to confirm template inheritance is working.</p>
+
+    <!-- Welcome Section -->
+    <div class="welcome-header">
+        <h1 class="welcome-title">Welcome back, {{ student.name }}</h1>
+        <p class="welcome-subtitle">Role: Student • KTU ID: {{ student.ktu_id }} • Class: {{ student.batch }} {{ student.department }}</p>
     </div>
+
+    <!-- Overall Stats Row -->
+    <div class="stats-row">
+        <div class="stat-box">
+            <div class="stat-main">
+                <span class="stat-label">Total Attendance %</span>
+                <span class="stat-number text-primary">{{ overall_percentage }}%</span>
+            </div>
+            <div class="stat-icon">
+                <span class="material-symbols-outlined" style="font-size: 32px;">trending_up</span>
+            </div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-main">
+                <span class="stat-label">Total Classes Attended</span>
+                <span class="stat-number">{{ total_attended }} <span style="font-size: 1rem; color: var(--slate-500); font-weight: 500;">hrs</span></span>
+            </div>
+            <div class="stat-icon bg-indigo-100 text-indigo-600">
+                <span class="material-symbols-outlined" style="font-size: 32px;">schedule</span>
+            </div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-main">
+                <span class="stat-label">Total Classes Absent</span>
+                <span class="stat-number">{{ total_absent }} <span style="font-size: 1rem; color: var(--slate-500); font-weight: 500;">hrs</span></span>
+            </div>
+            <div class="stat-icon bg-slate-100 text-slate-700">
+                <span class="material-symbols-outlined" style="font-size: 32px;">event_busy</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subjects Section -->
+    <h2 class="section-title">
+        <span class="material-symbols-outlined text-primary">menu_book</span>
+        Subjects
+    </h2>
+    
+    <div class="subjects-scroll-container" id="subjects-container">
+        {% for sub in subjects %}
+        <div class="subject-card {% if loop.first %}active{% endif %}" onclick="selectSubject('{{ sub.code }}', '{{ sub.actual_code }}', this)" 
+            data-code="{{ sub.code }}" 
+            data-actual-code="{{ sub.actual_code }}"
+            data-conducted="{{ sub.conducted }}" 
+            data-attended="{{ sub.attended }}" 
+            data-dl-count="{{ sub.dl_count }}"
+            data-missed="{{ sub.missed }}" 
+            data-percentage="{{ sub.percentage }}"
+            data-status-text="{{ sub.status_text }}">
+            
+            <div class="sub-icon-box">
+                <!-- Assign icon dynamically based on generic code, fallback to menu_book -->
+                <span class="material-symbols-outlined">
+                    {% if 'AAD' in sub.code %}account_tree
+                    {% elif 'CCW' in sub.code %}library_books
+                    {% elif 'CD' in sub.code %}code
+                    {% elif 'CGIP' in sub.code %}view_in_ar
+                    {% elif 'IE' in sub.code %}factory
+                    {% elif 'PE' in sub.code %}checklist
+                    {% else %}menu_book
+                    {% endif %}
+                </span>
+            </div>
+            <div class="sub-name" style="font-size: 0.95rem; line-height: 1.2; margin-bottom: 0.35rem;">{{ sub.full_name }}</div>
+            <div class="sub-meta">{{ sub.code }} • {{ sub.subject_type }} • S{{ sub.semester }} • {{ sub.credits }} CR</div>
+        </div>
+        {% else %}
+        <div class="text-slate-500 p-4">No subjects found in your record.</div>
+        {% endfor %}
+    </div>
+
+    <!-- Detailed Report Section -->
+    <div class="detailed-report" id="detailed-report-panel" style="{% if not subjects %}display:none;{% endif %}">
+        <div class="report-header">
+            <div class="report-header-dot"></div>
+            <span id="report-title">Select a Subject - Detailed Report</span>
+        </div>
+        
+        <div class="report-grid">
+            <div class="report-item">
+                <div>
+                    <div class="r-label text-slate-500">Total Conducted</div>
+                    <div class="r-value" id="r-conducted">0</div>
+                    <div class="r-sub">Total sessions this term</div>
+                </div>
+                <div class="r-icon"><span class="material-symbols-outlined">calendar_month</span></div>
+            </div>
+            
+            <div class="report-item">
+                <div>
+                    <div class="r-label text-emerald-600">Classes Attended</div>
+                    <div class="r-value" id="r-attended">0</div>
+                    <div class="r-sub text-emerald-600/80">Present in sessions</div>
+                </div>
+                <div class="r-icon text-emerald-600"><span class="material-symbols-outlined">how_to_reg</span></div>
+            </div>
+            
+            <div class="report-item">
+                <div>
+                    <div class="r-label text-blue-600">Duty Leaves</div>
+                    <div class="r-value" id="r-dl-count">0</div>
+                    <div class="r-sub text-blue-600/80">Approved leaves</div>
+                </div>
+                <div class="r-icon text-blue-600"><span class="material-symbols-outlined">assignment_turned_in</span></div>
+            </div>
+            
+            <div class="report-item">
+                <div>
+                    <div class="r-label text-red-600">Classes Missed</div>
+                    <div class="r-value" id="r-missed">0</div>
+                    <div class="r-sub text-red-600/80">Absent sessions</div>
+                </div>
+                <div class="r-icon text-red-600"><span class="material-symbols-outlined">event_busy</span></div>
+            </div>
+            
+            <div class="report-item" style="border-right: none;">
+                <div>
+                    <div class="r-label text-slate-800">Attendance Percentage</div>
+                    <div class="r-value" id="r-percentage">0%</div>
+                    <div class="r-sub text-emerald-600" id="r-status-text">(Excellent)</div>
+                </div>
+                <div class="r-icon"><span class="material-symbols-outlined">analytics</span></div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
+<script>
+    function selectSubject(code, actualCode, element) {
+        // Remove active class from all
+        document.querySelectorAll('.subject-card').forEach(el => el.classList.remove('active'));
+        // Add active to clicked
+        element.classList.add('active');
+        
+        // Update Details panel
+        document.getElementById('report-title').innerText = code + ' (' + actualCode + ') - Detailed Report';
+        document.getElementById('r-conducted').innerText = element.getAttribute('data-conducted');
+        document.getElementById('r-attended').innerText = element.getAttribute('data-attended');
+        
+        const dlCount = element.getAttribute('data-dl-count');
+        document.getElementById('r-dl-count').innerText = dlCount < 10 ? '0' + dlCount : dlCount;
+        
+        const missed = element.getAttribute('data-missed');
+        document.getElementById('r-missed').innerText = missed < 10 ? '0' + missed : missed;
+        
+        document.getElementById('r-percentage').innerText = element.getAttribute('data-percentage') + '%';
+        
+        const statusText = element.getAttribute('data-status-text');
+        const statusEl = document.getElementById('r-status-text');
+        statusEl.innerText = '(' + statusText + ')';
+        
+        // Dynamic coloring of status text based on percentage
+        const pct = parseInt(element.getAttribute('data-percentage'));
+        if (pct >= 90) {
+            statusEl.className = 'r-sub text-emerald-600 font-medium';
+        } else if (pct >= 75) {
+            statusEl.className = 'r-sub text-blue-600 font-medium';
+        } else {
+            statusEl.className = 'r-sub text-red-600 font-medium';
+        }
+    }
+    
+    // Auto-select first subject on load
+    document.addEventListener('DOMContentLoaded', () => {
+        const firstCard = document.querySelector('.subject-card');
+        if (firstCard) {
+            selectSubject(firstCard.getAttribute('data-code'), firstCard.getAttribute('data-actual-code'), firstCard);
+        }
+    });
 
-<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</script>
 {% endblock %}
