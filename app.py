@@ -1,4 +1,4 @@
-from flask import Flask, render_template, session, redirect, url_for, jsonify
+from flask import Flask, render_template, session, redirect, url_for, jsonify, request
 from config import Config
 from auth.auth_handler import auth_bp
 from attendance import attendance_bp
@@ -116,10 +116,22 @@ def api_get_device_command(device_id):
 
 @app.route('/advisor/manage')
 def advisor_manage():
-    """Render the advisor manage page stub."""
-    if 'user_id' not in session or session.get('role') != 'advisor':
+    """Render the advisor manage page with dynamic data."""
+    user_id = session.get('user_id')
+    if not user_id or session.get('role') != 'advisor':
         return redirect(url_for('login'))
-    return render_template('advisor_manage.html')
+        
+    subject_code = request.args.get('subject')
+    from utils.helpers import get_advisor_manage_data, get_active_device
+    
+    data = get_advisor_manage_data(user_id, subject_code)
+    device_info = get_active_device()
+    
+    if not data:
+        # Fallback if no data found for advisor/batch
+        return redirect(url_for('advisor_dashboard'))
+        
+    return render_template('advisor_manage.html', data=data, device_info=device_info)
 
 @app.route('/advisor/duty_leave')
 def advisor_duty_leave():

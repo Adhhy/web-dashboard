@@ -457,3 +457,158 @@ def get_subject_manage_data(subject_code):
     except Exception as e:
         print(f"Error fetching subject manageable constraints: {e}")
         return None
+
+def get_advisor_manage_data(user_id, selected_subject_code=None):
+    """
+    Compilation of data for Advisor Manage Dashboard.
+    Data is strictly isolated to the advisor's batch students.
+    """
+    db_path = Config.AUTH_DB_PATH
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        
+        # 1. Fetch Advisor Profile
+        cursor.execute("SELECT batch, department, name FROM advisors WHERE user_id = ?", (user_id,))
+        adv_row = cursor.fetchone()
+        if not adv_row:
+            conn.close()
+            return None
+        batch, dept, adv_name = adv_row
+        
+        # 2. Global Batch Metrics
+        # Total Enrolled
+        cursor.execute("SELECT count(*) FROM students WHERE batch = ? AND department = ?", (batch, dept))
+        total_enrolled = cursor.fetchone()[0]
+        
+        # Overall Attendance & Duty Leaves
+        cursor.execute("""
+            SELECT SUM(m.present_count + m.duty_leave_count), SUM(m.total_count), SUM(m.duty_leave_count)
+            FROM main_attendance m
+            JOIN students s ON m.student_id = s.student_id
+            WHERE s.batch = ? AND s.department = ?
+        """, (batch, dept))
+        overall_row = cursor.fetchone()
+        total_present_dl = overall_row[0] if overall_row[0] else 0
+        total_conducted = overall_row[1] if overall_row[1] else 1 # Avoid division by zero
+        total_dl = overall_row[2] if overall_row[2] else 0
+        overall_avg = int(round((total_present_dl / total_conducted) * 100))
+        
+        # At-Risk Count (Global average < 75% per student)
+        cursor.execute("""
+            SELECT s.student_id, SUM(m.present_count + m.duty_leave_count), SUM(m.total_count)
+            FROM students s
+            LEFT JOIN main_attendance m ON s.student_id = m.student_id
+            WHERE s.batch = ? AND s.department = ?
+            GROUP BY s.student_id
+        """, (batch, dept))
+        student_totals = cursor.fetchall()
+        at_risk_count = 0
+        for st in student_totals:
+            pdl = st[1] if st[1] else 0
+            tot = st[2] if st[2] else 0
+            if tot > 0 and (pdl / tot) < 0.75:
+                at_risk_count += 1
+                
+        # Subject Performance (Highest/Lowest)
+        cursor.execute("""
+            SELECT sub.full_name, SUM(m.present_count + m.duty_leave_count), SUM(m.total_count)
+            FROM main_attendance m
+            JOIN subjects sub ON m.subject_code = sub.short_code
+            JOIN students s ON m.student_id = s.student_id
+            WHERE s.batch = ? AND s.department = ?
+            GROUP BY m.subject_code
+        """, (batch, dept))
+        sub_perf = cursor.fetchall()
+        highest_subj = {"name": "N/A", "avg": 0}
+        lowest_subj = {"name": "N/A", "avg": 100}
+        
+        for sp in sub_perf:
+            s_name, s_pdl, s_tot = sp
+            s_avg = int(round((s_pdl / s_tot) * 100)) if s_tot > 0 else 0
+            if s_avg > highest_subj["avg"]:
+                highest_subj = {"name": s_name, "avg": s_avg}
+            if s_avg < lowest_subj["avg"]:
+                lowest_subj = {"name": s_name, "avg": s_avg}
+                
+        # 3. Available Subjects for Toggles
+        cursor.execute("""
+            SELECT DISTINCT sub.short_code, sub.full_name, sub.code, sub.semester
+            FROM main_attendance m
+            JOIN subjects sub ON m.subject_code = sub.short_code
+            JOIN students s ON m.student_id = s.student_id
+            WHERE s.batch = ? AND s.department = ?
+            ORDER BY sub.semester DESC, sub.short_code ASC
+        """, (batch, dept))
+        available_subjects = [{"short": r[0], "name": r[1], "code": r[2], "sem": r[3]} for r in cursor.fetchall()]
+        
+        if not selected_subject_code and available_subjects:
+            selected_subject_code = available_subjects[0]["short"]
+            
+        # 4. Subject-Specific Records & At-Risk Sidebar
+        student_records = []
+        at_risk_sidebar = []
+        selected_info = {"name": "Select Subject", "code": "", "sem": ""}
+        
+        if selected_subject_code:
+            # Find subject metadata
+            for s in available_subjects:
+                if s["short"] == selected_subject_code:
+                    selected_info = {"name": s["name"], "code": s["code"], "sem": s["sem"]}
+                    break
+            
+            # Fetch attendance
+            cursor.execute("""
+                SELECT s.student_id, s.name, m.present_count, m.duty_leave_count, m.total_count, s.ktu_id
+                FROM students s
+                JOIN main_attendance m ON s.student_id = m.student_id
+                WHERE s.batch = ? AND s.department = ? AND m.subject_code = ?
+                ORDER BY s.name ASC
+            """, (batch, dept, selected_subject_code))
+            rows = cursor.fetchall()
+            
+            for r in rows:
+                sid, name, pres, dl, tot, ktu = r
+                pdl = pres + dl
+                missed = tot - pdl
+                percent = float(round((pdl / tot * 100) if tot > 0 else 0, 1))
+                status = "Safe"
+                if percent < 75:
+                    status = "At Risk"
+                elif percent < 85:
+                    status = "Warning"
+                
+                record = {
+                    "id": ktu if ktu else sid,
+                    "name": name,
+                    "attended": pres,
+                    "dl": dl,
+                    "total": tot,
+                    "percent": percent,
+                    "missed": missed,
+                    "status": status
+                }
+                student_records.append(record)
+                if status == "At Risk":
+                    at_risk_sidebar.append(record)
+                    
+        conn.close()
+        
+        return {
+            "advisor": {"name": adv_name, "batch": batch, "dept": dept},
+            "global_stats": {
+                "overall_avg": overall_avg,
+                "at_risk_count": at_risk_count,
+                "total_dl": total_dl,
+                "highest_subject": highest_subj,
+                "lowest_subject": lowest_subj
+            },
+            "subjects": available_subjects,
+            "selected_subject": selected_subject_code,
+            "selected_info": selected_info,
+            "student_records": student_records,
+            "at_risk_sidebar": at_risk_sidebar
+        }
+    except Exception as e:
+        print(f"Error compiling advisor manage data: {e}")
+        return None
