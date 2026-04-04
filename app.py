@@ -52,6 +52,15 @@ def student_dashboard():
                            total_absent=total_absent,
                            overall_percentage=overall_percentage)
 
+@app.route('/student/duty_leave')
+def student_duty_leave():
+    """Render the student duty leave page."""
+    if 'user_id' not in session or session.get('role') != 'student':
+        return redirect(url_for('login'))
+    from utils.helpers import get_student_details
+    student = get_student_details(session.get('user_id'))
+    return render_template('student_duty_leave.html', student=student)
+
 
 @app.route('/advisor/dashboard')
 def advisor_dashboard():
@@ -135,10 +144,13 @@ def advisor_manage():
 
 @app.route('/advisor/duty_leave')
 def advisor_duty_leave():
-    """Render the advisor duty leave page stub."""
+    """Render the advisor duty leave page."""
     if 'user_id' not in session or session.get('role') != 'advisor':
         return redirect(url_for('login'))
-    return render_template('advisor_duty_leave.html')
+    from utils.helpers import get_advisor_details, get_active_device
+    advisor = get_advisor_details(session.get('user_id'))
+    device_info = get_active_device()
+    return render_template('advisor_duty_leave.html', advisor=advisor, device_info=device_info)
 
 @app.route('/teacher/dashboard')
 def teacher_dashboard():
@@ -158,6 +170,16 @@ def teacher_dashboard():
                          device_info=device_info,
                          teacher=teacher,
                          dashboard_data=dashboard_data)
+
+@app.route('/teacher/duty_leave')
+def teacher_duty_leave():
+    """Render the teacher duty leave page."""
+    if 'user_id' not in session or session.get('role') != 'teacher':
+        return redirect(url_for('login'))
+    from utils.helpers import get_teacher_details, get_active_device
+    teacher = get_teacher_details(session.get('user_id'))
+    device_info = get_active_device()
+    return render_template('teacher_duty_leave.html', teacher=teacher, device_info=device_info)
 
 @app.route('/teacher/subject/manage/<subject_code>')
 def teacher_subject_manage(subject_code):
@@ -206,12 +228,12 @@ def admin_dashboard():
         return redirect(url_for('login'))
     return render_template('admin_dashboard.html', username=session.get('username'), role=session.get('role'))
 
-@app.route('/admin/dl_management')
-def admin_dl_management():
-    """Render the DL Management stub for admin users."""
+@app.route('/admin/duty_leave')
+def admin_duty_leave():
+    """Render the duty leave management for admin users."""
     if 'user_id' not in session or session.get('role') != 'admin':
         return redirect(url_for('login'))
-    return render_template('admin_dl_management.html')
+    return render_template('admin_duty_leave.html')
 
 @app.route('/')
 def login():

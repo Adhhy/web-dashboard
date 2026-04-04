@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Review Duty Leave - Attendance Management System{% endblock %}
+{% block title %}Faculty Approval - Attendance Management System{% endblock %}
 
 {% block extra_styles %}
 <style>
@@ -144,6 +144,23 @@
         z-index: 10;
     }
 
+    /* Section Titles (Exact Student Style) */
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--slate-900);
+        margin: 3rem 0 1.5rem 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .active-count {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--slate-500);
+    }
+
     /* Request Cards (Exact Student Style) */
     .request-card {
         background: white;
@@ -198,8 +215,8 @@
         border-radius: 8px;
         font-size: 0.75rem;
         font-weight: 700;
-        background: #eff6ff;
-        color: #2563eb;
+        background: #f0fdf4;
+        color: #16a34a;
     }
 
     .details-row {
@@ -251,7 +268,7 @@
         position: absolute;
         top: 2.75rem;
         left: 3rem;
-        width: 50%;
+        width: 100%;
         height: 2px;
         background: #16a34a;
         z-index: 2;
@@ -309,17 +326,15 @@
         background: #fff;
     }
 
-    /* Completed Requests (Exact Student Style) */
-    .section-title {
-        font-size: 1.5rem;
+    .override-note {
+        font-size: 0.65rem;
         font-weight: 800;
-        color: var(--slate-900);
-        margin: 3rem 0 1.5rem 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        text-transform: uppercase;
+        color: var(--slate-400);
+        letter-spacing: 0.025em;
     }
 
+    /* History Cards (Exact Student Style) */
     .history-card {
         background: white;
         border-radius: 16px;
@@ -359,53 +374,6 @@
         display: flex;
         align-items: center;
         gap: 1rem;
-    }
-
-    .history-info p span {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
-
-    .badge-approved {
-        background: #f0fdf4;
-        color: #16a34a;
-        padding: 0.35rem 0.8rem;
-        border-radius: 6px;
-        font-size: 0.7rem;
-        font-weight: 800;
-        text-transform: uppercase;
-    }
-
-    .badge-rejected {
-        background: #fef2f2;
-        color: #dc2626;
-        padding: 0.35rem 0.8rem;
-        border-radius: 6px;
-        font-size: 0.7rem;
-        font-weight: 800;
-        text-transform: uppercase;
-    }
-
-    .active-count {
-        font-size: 0.7rem;
-        color: var(--slate-400);
-        background: #f1f5f9;
-        padding: 0.2rem 0.6rem;
-        border-radius: 99px;
-    }
-
-    .override-note {
-        font-size: 0.65rem;
-        font-weight: 800;
-        color: var(--slate-400);
-        text-transform: uppercase;
-        letter-spacing: 0.025em;
-    }
-
-    .btn-group {
-        display: flex;
-        gap: 0.75rem;
     }
 
     /* Sidebar Widgets */
@@ -452,6 +420,8 @@
     .ov-card { padding: 1rem; background: #f8fafc; border-radius: 12px; text-align: center; }
     .ov-val { font-size: 1.25rem; font-weight: 800; color: var(--slate-900); }
     .ov-lbl { font-size: 0.6rem; font-weight: 700; color: var(--slate-400); text-transform: uppercase; margin-top: 0.25rem; }
+    .badge-approved { background: #f0fdf4; color: #16a34a; padding: 0.35rem 0.8rem; border-radius: 6px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
+    .badge-rejected { background: #fef2f2; color: #dc2626; padding: 0.35rem 0.8rem; border-radius: 6px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
 </style>
 {% endblock %}
 
@@ -461,7 +431,7 @@
     <!-- Page Header (Shared with Student Page Style) -->
     <div class="page-header">
         <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-            <h1 class="page-title">Review Requests</h1>
+            <h1 class="page-title">Subject Approvals</h1>
             <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.75rem;">
                 <button onclick="openRulesModal()" class="btn btn-secondary flex items-center gap-2" style="padding: 0.5rem 1rem; border-radius: 99px;">
                     <span class="material-symbols-outlined" style="font-size: 20px;">info</span>
@@ -469,22 +439,22 @@
                 </button>
                 <div class="badge-portal" style="margin: 0;">
                     <span class="material-symbols-outlined" style="font-size: 16px;">verified_user</span>
-                    Advisor Portal
+                    Faculty Portal
                 </div>
             </div>
         </div>
-        <p class="page-subtitle">Oversee and authorize student duty leave requests for your assigned batches.</p>
+        <p class="page-subtitle">Provide final subject-level authorization for advisor-cleared duty leave requests.</p>
     </div>
 
     <!-- Stats Row -->
     <div class="stats-row">
         <div class="stat-card">
             <div class="stat-icon" style="background: #eff6ff; color: #2563eb;">
-                <span class="material-symbols-outlined">assignment</span>
+                <span class="material-symbols-outlined">subject</span>
             </div>
             <div class="stat-info">
-                <h4>Total Batch Requests</h4>
-                <div>128</div>
+                <h4>Subject Wise Requests</h4>
+                <div>84</div>
             </div>
         </div>
         <div class="stat-card">
@@ -492,8 +462,8 @@
                 <span class="material-symbols-outlined">pending_actions</span>
             </div>
             <div class="stat-info">
-                <h4>Pending My Review</h4>
-                <div>08</div>
+                <h4>Pending My Final Review</h4>
+                <div>05</div>
             </div>
         </div>
         <div class="stat-card">
@@ -502,7 +472,7 @@
             </div>
             <div class="stat-info">
                 <h4>Approved Today</h4>
-                <div>15</div>
+                <div>12</div>
             </div>
         </div>
     </div>
@@ -513,6 +483,7 @@
         <!-- Left Column -->
         <div class="primary-col">
             
+            <!-- Filter Section -->
             <div class="filter-section">
                 <div class="search-wrapper">
                     <span class="material-symbols-outlined">search</span>
@@ -520,13 +491,13 @@
                 </div>
             </div>
 
-            <!-- Pending Section (Exact Student Style) -->
+            <!-- Pending Section -->
             <div class="section-title">
                 Pending Approval
-                <span class="active-count">3 Active Requests</span>
+                <span class="active-count">5 Active Requests</span>
             </div>
 
-            <!-- Request Card 1 (Exact Student Layout) -->
+            <!-- Request Card 1 -->
             <div class="request-card">
                 <div class="request-card-header">
                     <div class="subj-info">
@@ -534,35 +505,33 @@
                             <span class="material-symbols-outlined">school</span>
                         </div>
                         <div class="subj-details">
-                            <h3>Sarah Jennifer Williams</h3>
-                            <p>ID: 2024-ST-8890 | CSE • Semester 4</p>
+                            <h3>Arjun Malhotra</h3>
+                            <p>ID: 2024-ST-0892 | CSE • Semester 6</p>
                         </div>
                     </div>
                     <div class="status-pill">
-                        Awaiting Advisor Approval
+                        Awaiting Faculty Final
                     </div>
                 </div>
 
                 <div class="details-row">
                     <div class="detail-item">
-                        <label>Date</label>
-                        <div class="value">Oct 24, 2023</div>
+                        <label>Subject</label>
+                        <div class="value">Cloud Computing</div>
                     </div>
                     <div class="detail-item">
                         <label>Periods</label>
-                        <div class="value">P1, P2, P3</div>
+                        <div class="value">P1, P2</div>
                     </div>
                     <div class="detail-item">
                         <label>Reason</label>
-                        <div class="value">Inter-University Hackathon</div>
+                        <div class="value">Tech Con 2024</div>
                     </div>
                     <div class="detail-item">
-                        <label>Document</label>
-                        <div class="value">
-                            <a href="#" style="color: #0f49bd; text-decoration: none; font-weight: 700; display: flex; align-items: center; gap: 4px;">
-                                <span class="material-symbols-outlined" style="font-size: 18px;">description</span>
-                                invite.pdf
-                            </a>
+                        <label>Advisor</label>
+                        <div class="value" style="color: #16a34a; display: flex; align-items: center; gap: 4px;">
+                            <span class="material-symbols-outlined" style="font-size: 16px;">verified</span>
+                            Approved
                         </div>
                     </div>
                 </div>
@@ -570,7 +539,7 @@
                 <!-- Approval Flow Timeline -->
                 <div class="approval-flow">
                     <div class="flow-line"></div>
-                    <div class="flow-progress" style="width: 50%;"></div>
+                    <div class="flow-progress" style="width: 100%;"></div>
                     
                     <div class="flow-step">
                         <div class="step-circle completed">
@@ -579,12 +548,14 @@
                         <div class="step-label completed">Student</div>
                     </div>
                     <div class="flow-step">
-                        <div class="step-circle active"></div>
-                        <div class="step-label active">Advisor</div>
+                        <div class="step-circle completed">
+                            <span class="material-symbols-outlined">check</span>
+                        </div>
+                        <div class="step-label completed">Advisor</div>
                     </div>
                     <div class="flow-step">
-                        <div class="step-circle"></div>
-                        <div class="step-label">Faculty</div>
+                        <div class="step-circle active"></div>
+                        <div class="step-label active">Faculty</div>
                     </div>
                 </div>
 
@@ -593,10 +564,10 @@
                 </div>
 
                 <div class="card-footer-actions">
-                    <div class="override-note">Admin override not available</div>
+                    <div class="override-note">Final Level Approval</div>
                     <div class="btn-group">
                         <button class="btn btn-secondary" style="background: #f1f5f9; color: var(--slate-600); border: none; padding: 0.6rem 1.5rem; border-radius: 12px; font-weight: 700;">Reject</button>
-                        <button class="btn btn-primary" style="padding: 0.6rem 1.5rem; border-radius: 12px; font-weight: 700; background: #0f49bd; color: white; border: none; cursor: pointer;">Approve Request</button>
+                        <button class="btn btn-primary" style="padding: 0.6rem 1.5rem; border-radius: 12px; font-weight: 700; background: #0f49bd; color: white; border: none; cursor: pointer;">Finalize Approval</button>
                     </div>
                 </div>
             </div>
@@ -606,35 +577,36 @@
                 <div class="request-card-header">
                     <div class="subj-info">
                         <div class="subj-icon">
-                            <span class="material-symbols-outlined">sports_basketball</span>
+                            <span class="material-symbols-outlined">brush</span>
                         </div>
                         <div class="subj-details">
-                            <h3>Mark Thorne</h3>
-                            <p>ID: 2024-ST-1102 | ME • Semester 6</p>
+                            <h3>Lila Vance</h3>
+                            <p>ID: 2024-ST-1455 | B.Des • Semester 2</p>
                         </div>
                     </div>
                     <div class="status-pill">
-                        Awaiting Advisor Approval
+                        Awaiting Faculty Final
                     </div>
                 </div>
 
                 <div class="details-row">
                     <div class="detail-item">
-                        <label>Date</label>
-                        <div class="value">Oct 24, 2023</div>
+                        <label>Subject</label>
+                        <div class="value">Art History</div>
                     </div>
                     <div class="detail-item">
                         <label>Periods</label>
-                        <div class="value">P4 - P7</div>
+                        <div class="value">P4 - P6</div>
                     </div>
                     <div class="detail-item">
                         <label>Reason</label>
-                        <div class="value">Sports Meet - Zonal</div>
+                        <div class="value">Gallery Exhibition</div>
                     </div>
                     <div class="detail-item">
-                        <label>Document</label>
-                        <div class="value">
-                            <span style="color: var(--slate-400);">No Doc Attached</span>
+                        <label>Advisor</label>
+                        <div class="value" style="color: #16a34a; display: flex; align-items: center; gap: 4px;">
+                            <span class="material-symbols-outlined" style="font-size: 16px;">verified</span>
+                            Approved
                         </div>
                     </div>
                 </div>
@@ -642,7 +614,7 @@
                 <!-- Approval Flow Timeline -->
                 <div class="approval-flow">
                     <div class="flow-line"></div>
-                    <div class="flow-progress" style="width: 50%;"></div>
+                    <div class="flow-progress" style="width: 100%;"></div>
                     
                     <div class="flow-step">
                         <div class="step-circle completed">
@@ -651,12 +623,14 @@
                         <div class="step-label completed">Student</div>
                     </div>
                     <div class="flow-step">
-                        <div class="step-circle active"></div>
-                        <div class="step-label active">Advisor</div>
+                        <div class="step-circle completed">
+                            <span class="material-symbols-outlined">check</span>
+                        </div>
+                        <div class="step-label completed">Advisor</div>
                     </div>
                     <div class="flow-step">
-                        <div class="step-circle"></div>
-                        <div class="step-label">Faculty</div>
+                        <div class="step-circle active"></div>
+                        <div class="step-label active">Faculty</div>
                     </div>
                 </div>
 
@@ -665,15 +639,15 @@
                 </div>
 
                 <div class="card-footer-actions">
-                    <div class="override-note">Admin override not available</div>
+                    <div class="override-note">Final Level Approval</div>
                     <div class="btn-group">
                         <button class="btn btn-secondary" style="background: #f1f5f9; color: var(--slate-600); border: none; padding: 0.6rem 1.5rem; border-radius: 12px; font-weight: 700;">Reject</button>
-                        <button class="btn btn-primary" style="padding: 0.6rem 1.5rem; border-radius: 12px; font-weight: 700; background: #0f49bd; color: white; border: none; cursor: pointer;">Approve Request</button>
+                        <button class="btn btn-primary" style="padding: 0.6rem 1.5rem; border-radius: 12px; font-weight: 700; background: #0f49bd; color: white; border: none; cursor: pointer;">Finalize Approval</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Completed Requests Section (Exact Student Style) -->
+            <!-- Completed Requests Section -->
             <div class="section-title">
                 Completed Requests
                 <span class="active-count">Past 30 Days</span>
@@ -685,8 +659,8 @@
                         <h4>Sarah Jennifer Williams</h4>
                         <p>
                             <span><span class="material-symbols-outlined" style="font-size: 16px;">calendar_today</span>Oct 21, 2023</span>
-                            <span><span class="material-symbols-outlined" style="font-size: 16px;">school</span>Digital Electronics</span>
-                            <span><span class="material-symbols-outlined" style="font-size: 16px;">history</span>Processed in 2h</span>
+                            <span><span class="material-symbols-outlined" style="font-size: 16px;">book</span>Network Security</span>
+                            <span><span class="material-symbols-outlined" style="font-size: 16px;">history</span>Processed in 30m</span>
                         </p>
                     </div>
                 </div>
@@ -696,26 +670,9 @@
                 </div>
             </div>
 
-            <div class="history-card">
-                <div class="history-main">
-                    <div class="history-info">
-                        <h4>Mark Thorne</h4>
-                        <p>
-                            <span><span class="material-symbols-outlined" style="font-size: 16px;">calendar_today</span>Oct 18, 2023</span>
-                            <span><span class="material-symbols-outlined" style="font-size: 16px;">school</span>Technical Communication</span>
-                            <span style="color: #dc2626;"><span class="material-symbols-outlined" style="font-size: 16px;">info</span>Incomplete Document</span>
-                        </p>
-                    </div>
-                </div>
-                <div class="history-status">
-                    <span class="badge-rejected">Rejected</span>
-                    <span class="material-symbols-outlined" style="color: var(--slate-300); margin-left: 1rem;">chevron_right</span>
-                </div>
-            </div>
-
         </div>
 
-        <!-- Right Column (Sidebar Cards Kept Intact) -->
+        <!-- Right Column -->
         <div class="sidebar-col">
             
             <div class="sidebar-widget">
@@ -732,16 +689,18 @@
                             <span class="h-label">Student Submission</span>
                         </div>
                     </div>
-                    <div class="h-step active">
-                        <div class="h-circle"></div>
+                    <div class="h-step done">
+                        <div class="h-circle">
+                            <span class="material-symbols-outlined" style="font-size: 16px;">check</span>
+                        </div>
                         <div class="h-info">
                             <span class="h-label">Batch Advisor Review</span>
                         </div>
                     </div>
-                    <div class="h-step">
+                    <div class="h-step active">
                         <div class="h-circle"></div>
                         <div class="h-info">
-                            <span class="h-label">Subject Faculty Final</span>
+                            <span class="h-label">Subject Faculty (Final)</span>
                         </div>
                     </div>
                 </div>
@@ -757,12 +716,12 @@
                 </h2>
                 <div class="ov-grid">
                     <div class="ov-card">
-                        <div class="ov-val">12</div>
+                        <div class="ov-val">42</div>
                         <div class="ov-lbl">Pending</div>
                     </div>
                     <div class="ov-card">
-                        <div class="ov-val">84</div>
-                        <div class="ov-lbl">Approved</div>
+                        <div class="ov-val">156</div>
+                        <div class="ov-lbl">Authorized</div>
                     </div>
                 </div>
             </div>
@@ -771,5 +730,5 @@
 
     </div>
 
-</div></div>
+</div>
 {% endblock %}

@@ -49,7 +49,7 @@
                 <nav class="hidden md:flex space-x-8 flex-1 justify-center">
                     {% if session.get('role') == 'admin' %}
                         <a class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% else %}inactive{% endif %}" href="{{ url_for('admin_dashboard') }}">Home</a>
-                        <a class="nav-link {% if request.endpoint == 'admin_dl_management' %}active{% else %}inactive{% endif %}" href="{{ url_for('admin_dl_management') }}">DL Management</a>
+                        <a class="nav-link {% if request.endpoint == 'admin_duty_leave' %}active{% else %}inactive{% endif %}" href="{{ url_for('admin_duty_leave') }}">Duty Leave</a>
                     {% elif session.get('role') == 'advisor' %}
                         <a class="nav-link {% if request.endpoint == 'advisor_dashboard' %}active{% else %}inactive{% endif %}" href="{{ url_for('advisor_dashboard') }}">Home</a>
                         <a class="nav-link {% if request.endpoint == 'advisor_manage' %}active{% else %}inactive{% endif %}" href="{{ url_for('advisor_manage') }}">Manage</a>
@@ -57,10 +57,10 @@
                     {% elif session.get('role') == 'teacher' %}
                         <a class="nav-link {% if request.endpoint == 'teacher_dashboard' %}active{% else %}inactive{% endif %}" href="{{ url_for('teacher_dashboard') }}">Home</a>
                         <a class="nav-link {% if request.endpoint == 'teacher_subject_manage' %}active{% else %}inactive{% endif %}" href="{{ url_for('teacher_manage') }}">Manage</a>
-                        <a class="nav-link inactive" href="#">Duty Leave</a>
+                        <a class="nav-link {% if request.endpoint == 'teacher_duty_leave' %}active{% else %}inactive{% endif %}" href="{{ url_for('teacher_duty_leave') }}">Duty Leave</a>
                     {% else %}
                         <a class="nav-link {% if request.endpoint in ['dashboard', 'student_dashboard'] %}active{% else %}inactive{% endif %}" href="{{ url_for('dashboard') }}">Home</a>
-                        <a class="nav-link inactive" href="#">Duty Leave</a>
+                        <a class="nav-link {% if request.endpoint == 'student_duty_leave' %}active{% else %}inactive{% endif %}" href="{{ url_for('student_duty_leave') }}">Duty Leave</a>
                     {% endif %}
                 </nav>
                 <!-- Right Side: Profile Dropdown -->
@@ -144,6 +144,88 @@
                         <button type="button" id="submit-pw-btn" class="btn btn-primary">Submit</button>
                         <button type="button" id="cancel-pw-btn" class="btn btn-secondary">Cancel</button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Duty Leave Guidelines Modal -->
+    <div id="rules-modal" class="fixed inset-0 z-100 hidden overflow-y-auto" style="background: rgba(15, 23, 42, 0.85); scroll-behavior: smooth;">
+        <div class="modal-overlay" onclick="closeRulesModal()" style="position: fixed; inset: 0; z-index: -1; cursor: pointer;"></div>
+        
+        <div class="flex min-h-full items-center justify-center p-8 text-center pointer-events-none">
+            <!-- Modal Panel -->
+            <div class="modal-panel relative w-full max-w-4xl text-left pointer-events-auto shadow-2xl" style="border-radius: 24px; background: white; margin: 2rem auto;">
+                <div style="padding: 4rem 5rem 3rem 5rem;">
+                    <!-- Header Section -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 2rem;">
+                        <div style="display: flex; align-items: center; gap: 1.5rem;">
+                            <div style="width: 64px; height: 64px; background: rgba(15, 73, 189, 0.1); border-radius: 18px; display: flex; align-items: center; justify-content: center; color: #0f49bd;">
+                                <span class="material-symbols-outlined" style="font-size: 36px;">menu_book</span>
+                            </div>
+                            <div>
+                                <h3 style="margin: 0; font-size: 2.25rem; font-weight: 900; color: #0f172a; letter-spacing: -0.025em;">Duty Leave Guidelines</h3>
+                                <p style="margin: 4px 0 0 0; font-size: 1rem; color: #64748b; font-weight: 500;">Review system rules and approval protocols</p>
+                            </div>
+                        </div>
+                        <button onclick="closeRulesModal()" style="background: transparent; border: none; cursor: pointer; color: #94a3b8; padding: 8px;">
+                            <span class="material-symbols-outlined" style="font-size: 32px;">close</span>
+                        </button>
+                    </div>
+
+                    <!-- Content Grid -->
+                    <div style="display: flex; flex-direction: column; gap: 3rem;">
+                        <!-- Timing -->
+                        <div style="display: grid; grid-template-columns: 60px 1fr; gap: 2.5rem; align-items: flex-start;">
+                            <div style="width: 60px; height: 60px; background: #f8fafc; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #0f49bd;">
+                                <span class="material-symbols-outlined" style="font-size: 28px;">schedule</span>
+                            </div>
+                            <div>
+                                <h4 style="margin: 0 0 0.5rem 0; font-size: 1.25rem; font-weight: 800; color: #0f172a;">Submission & Timing</h4>
+                                <p style="margin: 0; font-size: 1.1rem; color: #475569; line-height: 1.6;">Requests must be submitted on the <b>same day</b> and are valid until <b>12:00 AM (midnight)</b>. Late entries are not allowed.</p>
+                            </div>
+                        </div>
+
+                        <!-- Workflow -->
+                        <div style="display: grid; grid-template-columns: 60px 1fr; gap: 2.5rem; align-items: flex-start;">
+                            <div style="width: 60px; height: 60px; background: #f8fafc; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #0f49bd;">
+                                <span class="material-symbols-outlined" style="font-size: 28px;">account_tree</span>
+                            </div>
+                            <div>
+                                <h4 style="margin: 0 0 0.5rem 0; font-size: 1.25rem; font-weight: 800; color: #0f172a;">Approval Workflow</h4>
+                                <p style="margin: 0; font-size: 1.1rem; color: #475569; line-height: 1.6;">Sequence: <b>Advisor</b> → <b>Subject Faculty</b>. Both levels must approve for the leave to be granted.</p>
+                            </div>
+                        </div>
+
+                        <!-- Rejection -->
+                        <div style="display: grid; grid-template-columns: 60px 1fr; gap: 2.5rem; align-items: flex-start;">
+                            <div style="width: 60px; height: 60px; background: #fef2f2; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #dc2626;">
+                                <span class="material-symbols-outlined" style="font-size: 28px;">cancel</span>
+                            </div>
+                            <div>
+                                <h4 style="margin: 0 0 0.5rem 0; font-size: 1.25rem; font-weight: 800; color: #0f172a;">Rejection Rules</h4>
+                                <p style="margin: 0; font-size: 1.1rem; color: #475569; line-height: 1.6;">Rejection at any level is <b>final</b>. Requests cannot be edited or resubmitted once rejected.</p>
+                            </div>
+                        </div>
+
+                        <!-- Locking -->
+                        <div style="display: grid; grid-template-columns: 60px 1fr; gap: 2.5rem; align-items: flex-start;">
+                            <div style="width: 60px; height: 60px; background: #fffbeb; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #d97706;">
+                                <span class="material-symbols-outlined" style="font-size: 28px;">lock_clock</span>
+                            </div>
+                            <div>
+                                <h4 style="margin: 0 0 0.5rem 0; font-size: 1.25rem; font-weight: 800; color: #0f172a;">Expirations & Locking</h4>
+                                <p style="margin: 0; font-size: 1.1rem; color: #475569; line-height: 1.6;">Unprocessed requests <b>lock</b> at midnight. <b>Admin</b> becomes the final authority for locked entries.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Section -->
+                <div style="background: #f8fafc; padding: 2.5rem 5rem; display: flex; justify-content: flex-end; border-top: 1px solid #f1f5f9; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px;">
+                    <button type="button" onclick="closeRulesModal()" class="btn btn-primary" style="padding: 1rem 3.5rem; font-size: 1.25rem; font-weight: 800; border-radius: 16px;">
+                        Got it!
+                    </button>
                 </div>
             </div>
         </div>

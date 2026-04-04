@@ -128,3 +128,20 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+
+// Duty Leave Rules Modal Toggle
+function openRulesModal() {
+    const modal = document.getElementById('rules-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    }
+}
+
+function closeRulesModal() {
+    const modal = document.getElementById('rules-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = ''; // Restore scrolling
+    }
+}

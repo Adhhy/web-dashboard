@@ -1,0 +1,701 @@
+{% extends "base.html" %}
+
+{% block title %}Duty Leave Requests - Attendance Management System{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* Student Duty Leave Page Specific Styles */
+    .page-header {
+        margin-bottom: 2.5rem;
+    }
+
+    .badge-portal {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0.8rem;
+        background: #eef2ff;
+        color: #4f46e5;
+        border-radius: 99px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+    }
+
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--slate-900);
+        margin: 0;
+        letter-spacing: -0.025em;
+    }
+
+    .page-subtitle {
+        color: var(--slate-500);
+        font-size: 1.1rem;
+        margin-top: 0.5rem;
+        max-width: 700px;
+    }
+
+    /* Form Card */
+    .form-card {
+        background: white;
+        border-radius: 20px;
+        border: 1px solid var(--slate-100);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        padding: 2rem;
+        margin-bottom: 3rem;
+    }
+
+    .form-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--slate-50);
+    }
+
+    .form-icon {
+        width: 48px;
+        height: 48px;
+        background: #0f49bd;
+        color: white;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .form-title-group h2 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 0;
+        color: var(--slate-900);
+    }
+
+    .form-title-group p {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #dc2626;
+        margin: 0.25rem 0 0 0;
+        text-transform: uppercase;
+    }
+
+    /* Form Layout Grid */
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 280px;
+        gap: 2rem;
+    }
+
+    @media (max-width: 1024px) {
+        .form-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--slate-700);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+        border: 1.5px solid var(--slate-200);
+        font-family: inherit;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #0f49bd;
+        box-shadow: 0 0 0 4px rgba(15, 73, 189, 0.1);
+    }
+
+    /* Period Picker */
+    .period-grid {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .period-btn {
+        width: 42px;
+        height: 42px;
+        border-radius: 8px;
+        border: 1.5px solid var(--slate-200);
+        background: #f8fafc;
+        font-weight: 700;
+        font-size: 0.8125rem;
+        color: var(--slate-500);
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .period-btn:hover {
+        background: #f1f5f9;
+        border-color: var(--slate-300);
+    }
+
+    .period-btn.active {
+        background: #0f49bd;
+        color: white;
+        border-color: #0f49bd;
+    }
+
+    /* Drop Zone */
+    .upload-zone {
+        border: 2px dashed var(--slate-200);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background: #f8fafc;
+    }
+
+    .upload-zone:hover {
+        border-color: #0f49bd;
+        background: rgba(15, 73, 189, 0.02);
+    }
+
+    .upload-icon {
+        font-size: 32px;
+        color: var(--slate-400);
+        margin-bottom: 0.5rem;
+    }
+
+    .upload-text {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--slate-600);
+    }
+
+    .upload-subtext {
+        font-size: 0.6875rem;
+        color: var(--slate-400);
+        margin-top: 0.25rem;
+    }
+
+    /* Submit Row */
+    .form-footer {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--slate-50);
+    }
+
+    .submit-btn {
+        background: #0f49bd;
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 12px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 4px 12px rgba(15, 73, 189, 0.2);
+    }
+
+    .submit-btn:hover {
+        background: #0a3a96;
+        transform: translateY(-1px);
+    }
+
+    /* Request Cards */
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--slate-900);
+        margin-bottom: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .active-count {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--slate-500);
+    }
+
+    .request-card {
+        background: white;
+        border-radius: 20px;
+        border: 1px solid var(--slate-100);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+
+    .request-card-header {
+        padding: 1.5rem;
+        background: #f8fafc;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--slate-100);
+    }
+
+    .subj-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .subj-icon {
+        width: 40px;
+        height: 40px;
+        background: white;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #0f49bd;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .subj-details h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--slate-900);
+    }
+
+    .subj-details p {
+        margin: 0.15rem 0 0 0;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--slate-500);
+    }
+
+    .status-pill {
+        padding: 0.4rem 0.8rem;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .status-pill-waiting {
+        background: #eff6ff;
+        color: #2563eb;
+    }
+
+    /* Request Details Grid */
+    .details-row {
+        padding: 1.5rem;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+        border-bottom: 1px solid var(--slate-50);
+    }
+
+    @media (max-width: 768px) {
+        .details-row {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    .detail-item label {
+        display: block;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--slate-400);
+        margin-bottom: 0.4rem;
+        letter-spacing: 0.05em;
+    }
+
+    .detail-item .value {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--slate-800);
+    }
+
+    .doc-link {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #0f49bd;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
+
+    /* Approval Flow Timeline */
+    .approval-flow {
+        padding: 1.5rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+        max-width: 800px;
+        margin-top: 0.5rem;
+    }
+
+    .flow-line {
+        position: absolute;
+        top: 2.75rem;
+        left: 3rem;
+        right: 3rem;
+        height: 2px;
+        background: var(--slate-100);
+        z-index: 1;
+    }
+
+    .flow-progress {
+        position: absolute;
+        top: 2.75rem;
+        left: 3rem;
+        width: 33%;
+        height: 2px;
+        background: #16a34a;
+        z-index: 2;
+    }
+
+    .flow-step {
+        position: relative;
+        z-index: 3;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .step-circle {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: white;
+        border: 2px solid var(--slate-200);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        color: var(--slate-300);
+        transition: all 0.3s;
+    }
+
+    .step-circle.completed {
+        background: #16a34a;
+        border-color: #16a34a;
+        color: white;
+    }
+
+    .step-circle.active {
+        background: white;
+        border-color: #0f49bd;
+        border-width: 6px;
+    }
+
+    .step-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--slate-400);
+    }
+
+    .step-label.active {
+        color: #0f49bd;
+    }
+
+    .step-label.completed {
+        color: #16a34a;
+    }
+
+    /* Completed List */
+    .history-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.25rem;
+        border: 1px solid var(--slate-100);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+    .history-card:hover {
+        transform: translateX(4px);
+        border-color: var(--slate-200);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+
+    .history-main {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .history-info h4 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--slate-900);
+    }
+
+    .history-info p {
+        margin: 0.25rem 0 0 0;
+        font-size: 0.8125rem;
+        color: var(--slate-500);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .badge-approved {
+        background: #f0fdf4;
+        color: #16a34a;
+        padding: 0.3rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    .badge-rejected {
+        background: #fef2f2;
+        color: #dc2626;
+        padding: 0.3rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-8">
+    
+    <!-- Header -->
+    <div class="page-header">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+            <h1 class="page-title">Duty Leave Requests</h1>
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.75rem;">
+                <button onclick="openRulesModal()" class="btn btn-secondary flex items-center gap-2" style="padding: 0.5rem 1rem; border-radius: 99px;">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">info</span>
+                    Guidelines
+                </button>
+                <div class="badge-portal" style="margin: 0;">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">auto_awesome</span>
+                    Student Portal
+                </div>
+            </div>
+        </div>
+        <p class="page-subtitle">Manage your academic absence authorizations. Ensure all supporting documentation is attached before submission.</p>
+    </div>
+
+    <!-- New Request Form -->
+    <div class="form-card">
+        <div class="form-header">
+            <div class="form-icon">
+                <span class="material-symbols-outlined">add_task</span>
+            </div>
+            <div class="form-title-group">
+                <h2>New Leave Request</h2>
+                <p>Requests are valid only for today</p>
+            </div>
+        </div>
+
+        <div class="form-grid">
+            <div class="form-col">
+                <div class="form-group">
+                    <label class="form-label">Subject</label>
+                    <select class="form-control">
+                        <option>Select Subject</option>
+                        <option selected>Advanced Mathematics II</option>
+                        <option>Digital Electronics</option>
+                        <option>Technical Communication</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Select Periods (Multi-select)</label>
+                    <div class="period-grid">
+                        <button type="button" class="period-btn">P1</button>
+                        <button type="button" class="period-btn">P2</button>
+                        <button type="button" class="period-btn">P3</button>
+                        <button type="button" class="period-btn active">P4</button>
+                        <button type="button" class="period-btn">P5</button>
+                        <button type="button" class="period-btn">P6</button>
+                        <button type="button" class="period-btn active">P7</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-col">
+                <div class="form-group">
+                    <label class="form-label">Reason for Leave</label>
+                    <input type="text" class="form-control" placeholder="e.g. University Sports Meet" value="Sports Meet - Zonal Level">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control resize-none" rows="4" style="height: 120px; overflow-y: auto; resize: none !important;" placeholder="Enter your detailed reason here (e.g. Participation in official university event as per the attached invitation letter)."></textarea>
+                </div>
+            </div>
+
+            <div class="form-col">
+                <label class="form-label">Supporting Document</label>
+                <div class="upload-zone">
+                    <span class="material-symbols-outlined upload-icon">cloud_upload</span>
+                    <div class="upload-text">Drop PDF or Click to upload</div>
+                    <div class="upload-subtext">Max 2MB per file</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-footer">
+            <button type="button" class="submit-btn" onclick="alert('Frontend stub: Submit functionality will be connected later.')">
+                Submit Request
+                <span class="material-symbols-outlined" style="font-size: 20px;">send</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Pending Approval -->
+    <div class="section-title">
+        Pending Approval
+        <span class="active-count">1 Active Request</span>
+    </div>
+
+    <div class="request-card">
+        <div class="request-card-header">
+            <div class="subj-info">
+                <div class="subj-icon">
+                    <span class="material-symbols-outlined">calculate</span>
+                </div>
+                <div class="subj-details">
+                    <h3>Advanced Mathematics II</h3>
+                    <p>{{ student.name if student else 'ALEX JOHNSON' }} • ID: {{ student.ktu_id if student else '2024-ST-9412' }}</p>
+                </div>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
+                <div class="status-pill status-pill-waiting">
+                    Awaiting Advisor Approval
+                </div>
+                <div style="font-size: 0.65rem; font-weight: 800; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.025em;">
+                    Admin override not available
+                </div>
+            </div>
+        </div>
+
+        <div class="details-row">
+            <div class="detail-item">
+                <label>Date</label>
+                <div class="value">Oct 24, 2023</div>
+            </div>
+            <div class="detail-item">
+                <label>Periods</label>
+                <div class="value">P1, P3, P7</div>
+            </div>
+            <div class="detail-item">
+                <label>Reason</label>
+                <div class="value">University Sports</div>
+            </div>
+            <div class="detail-item">
+                <label>Document</label>
+                <a href="#" class="doc-link">
+                    <span class="material-symbols-outlined">attach_file</span>
+                    invite_letter.pdf
+                </a>
+            </div>
+        </div>
+
+        <div class="approval-flow">
+            <div class="flow-line"></div>
+            <div class="flow-progress" style="width: 50%;"></div>
+            
+            <div class="flow-step">
+                <div class="step-circle completed">
+                    <span class="material-symbols-outlined">check</span>
+                </div>
+                <div class="step-label completed">Student</div>
+            </div>
+            <div class="flow-step">
+                <div class="step-circle active"></div>
+                <div class="step-label active">Advisor</div>
+            </div>
+            <div class="flow-step">
+                <div class="step-circle"></div>
+                <div class="step-label">Faculty</div>
+            </div>
+        </div>
+        <div style="padding: 0 1.5rem 1.5rem; color: var(--slate-400); font-size: 0.75rem; text-align: center;">
+            Valid until 11:59 PM today
+        </div>
+    </div>
+
+    <!-- Completed Requests -->
+    <div class="section-title">
+        Completed Requests
+        <span class="active-count" style="font-size: 0.75rem; text-transform: uppercase;">Past 30 Days</span>
+    </div>
+
+    <div class="history-card">
+        <div class="history-main">
+            <div class="history-info">
+                <h4>Digital Electronics</h4>
+                <p>
+                    <span><span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">calendar_today</span>Oct 21, 2023</span>
+                    <span><span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">schedule</span>Periods: P4, P5</span>
+                    <span><span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">history</span>Processed in 4h</span>
+                </p>
+            </div>
+        </div>
+        <div class="history-status">
+            <span class="badge-approved">Approved</span>
+            <span class="material-symbols-outlined" style="color: var(--slate-300); margin-left: 1rem;">chevron_right</span>
+        </div>
+    </div>
+
+    <div class="history-card">
+        <div class="history-main">
+            <div class="history-info">
+                <h4>Technical Communication</h4>
+                <p>
+                    <span><span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">calendar_today</span>Oct 18, 2023</span>
+                    <span><span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">schedule</span>Periods: P1-P6</span>
+                    <span style="color: #dc2626;"><span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">info</span>Insufficient document proof</span>
+                </p>
+            </div>
+        </div>
+        <div class="history-status">
+            <span class="badge-rejected">Rejected</span>
+            <span class="material-symbols-outlined" style="color: var(--slate-300); margin-left: 1rem;">chevron_right</span>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
