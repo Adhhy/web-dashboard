@@ -363,3 +363,97 @@ def get_teacher_dashboard_data(user_id):
     except Exception as e:
         print(f"Error compiling teacher dashboard constraints: {e}")
         return {"subjects": [], "total_enrolled": 0, "active_sessions": 0, "avg_rate": 0}
+
+def get_subject_manage_data(subject_code):
+    """
+    Fetch comprehensive analytics and student records for a specific subject.
+    Returns: {
+        "subject": { "name": "...", "code": "...", "sem": ... },
+        "stats": { "total_classes": ..., "avg_attendance": ..., "total_dl": ..., "total_absences": ... },
+        "students": [ { "id": "...", "name": "...", "attended": ..., "dl": ..., "total": ..., "percent": ..., "missed": ..., "status": "..." } ],
+        "at_risk": [ ... ]
+    }
+    """
+    db_path = Config.AUTH_DB_PATH
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        
+        # 1. Fetch Subject Metadata
+        cursor.execute("SELECT full_name, semester, code FROM subjects WHERE short_code = ?", (subject_code,))
+        sub_row = cursor.fetchone()
+        if not sub_row:
+            conn.close()
+            return None
+            
+        subject_info = {"name": sub_row[0], "sem": sub_row[1], "code": sub_row[2]}
+        
+        # 2. Fetch Student Records from main_attendance joined with students
+        cursor.execute("""
+            SELECT m.student_id, s.name, m.present_count, m.duty_leave_count, m.total_count, s.ktu_id
+            FROM main_attendance m
+            JOIN students s ON m.student_id = s.student_id
+            WHERE m.subject_code = ?
+            ORDER BY s.name ASC
+        """, (subject_code,))
+        rows = cursor.fetchall()
+        
+        students = []
+        at_risk = []
+        total_present_dl = 0
+        total_conducted = 0
+        total_dl = 0
+        total_absences = 0
+        max_conducted = 0
+        
+        for r in rows:
+            sid, name, present, dl, total, ktu_id = r
+            credited_present = present + dl
+            missed = total - credited_present
+            percent = float(round((credited_present / total * 100) if total > 0 else 0, 1))
+            
+            # Status classification
+            status = "Safe"
+            if percent < 75:
+                status = "At Risk"
+            elif percent < 85:
+                status = "Warning"
+                
+            student_data = {
+                "id": ktu_id if ktu_id else sid, # Prioritize KTU ID
+                "name": name,
+                "attended": present,
+                "dl": dl,
+                "total": total,
+                "percent": percent,
+                "missed": missed,
+                "status": status
+            }
+            students.append(student_data)
+            
+            # Aggregate stats
+            total_present_dl += credited_present
+            total_conducted += total
+            total_dl += dl
+            total_absences += missed
+            if total > max_conducted:
+                max_conducted = total
+                
+        conn.close()
+        
+        avg_attendance = int(round((total_present_dl / total_conducted * 100))) if total_conducted > 0 else 0
+        
+        return {
+            "subject": subject_info,
+            "stats": {
+                "total_classes": max_conducted,
+                "avg_attendance": avg_attendance,
+                "total_dl": total_dl,
+                "total_absences": total_absences
+            },
+            "students": students,
+            "at_risk": [s for s in students if s["status"] == "At Risk"]
+        }
+    except Exception as e:
+        print(f"Error fetching subject manageable constraints: {e}")
+        return None

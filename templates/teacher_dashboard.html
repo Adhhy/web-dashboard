@@ -99,6 +99,23 @@
         }
     }
 
+    .subjects-grid a {
+        text-decoration: none !important;
+        display: block;
+        color: inherit;
+        height: 100%;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .subjects-grid a:hover {
+        transform: translateY(-4px);
+    }
+
+    .subjects-grid a:hover .subject-card {
+        border-color: var(--primary-light);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
     .subject-card {
         background: var(--white);
         border: 1px solid var(--slate-100);
@@ -107,6 +124,8 @@
         box-shadow: 0 4px 6px rgba(0,0,0,0.02);
         display: flex;
         flex-direction: column;
+        height: 100%;
+        position: relative;
     }
     
     .card-top {
@@ -300,29 +319,31 @@
     
     <div class="subjects-grid">
         {% for subject in dashboard_data.subjects %}
-        <div class="subject-card detailed-card">
-            <div class="card-top">
-                <div class="subject-icon">
-                    <span class="material-symbols-outlined">menu_book</span>
+        <a href="{{ url_for('teacher_subject_manage', subject_code=subject.short_code) }}" class="text-decoration-none">
+            <div class="subject-card detailed-card">
+                <div class="card-top">
+                    <div class="subject-icon">
+                        <span class="material-symbols-outlined">menu_book</span>
+                    </div>
+                    <div class="semester-badge" style="align-self: flex-end; position: absolute; right: 0;">SEMESTER {{ subject.semester }}</div>
+                    <div class="subject-info-container">
+                        <div class="subject-name">{{ subject.full_name }}</div>
+                        <div class="subject-code">{{ subject.code }}</div>
+                    </div>
                 </div>
-                <div class="semester-badge" style="align-self: flex-end; position: absolute; right: 0;">SEMESTER {{ subject.semester }}</div>
-                <div class="subject-info-container">
-                    <div class="subject-name">{{ subject.full_name }}</div>
-                    <div class="subject-code">{{ subject.code }}</div>
+                <div class="card-divider"></div>
+                <div class="card-footer">
+                    <div class="stat-item">
+                        <span class="material-symbols-outlined">group</span>
+                        {{ subject.enrolled }} Students
+                    </div>
+                    <div class="stat-item">
+                        <span class="material-symbols-outlined">calendar_today</span>
+                        {{ subject.schedule }}
+                    </div>
                 </div>
             </div>
-            <div class="card-divider"></div>
-            <div class="card-footer">
-                <div class="stat-item">
-                    <span class="material-symbols-outlined">group</span>
-                    {{ subject.enrolled }} Students
-                </div>
-                <div class="stat-item">
-                    <span class="material-symbols-outlined">calendar_today</span>
-                    {{ subject.schedule }}
-                </div>
-            </div>
-        </div>
+        </a>
         {% else %}
         <div class="text-slate-500 italic p-4 text-center" style="grid-column: 1 / -1;">No mapped subjects handled. Please contact administrator.</div>
         {% endfor %}

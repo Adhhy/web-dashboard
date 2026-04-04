@@ -147,6 +147,46 @@ def teacher_dashboard():
                          teacher=teacher,
                          dashboard_data=dashboard_data)
 
+@app.route('/teacher/subject/manage/<subject_code>')
+def teacher_subject_manage(subject_code):
+    """Render the teacher's subject manage page."""
+    user_id = session.get('user_id')
+    if not user_id or session.get('role') != 'teacher':
+        return redirect(url_for('login'))
+    
+    teacher = get_teacher_details(user_id)
+    device_info = get_active_device()
+    
+    from utils.helpers import get_subject_manage_data
+    manage_data = get_subject_manage_data(subject_code)
+    
+    if not manage_data:
+        # If no data found for this subject, redirect back to dashboard
+        return redirect(url_for('teacher_dashboard'))
+    
+    return render_template('teacher_subject_manage.html', 
+                          teacher=teacher, 
+                          device_info=device_info,
+                          data=manage_data)
+
+@app.route('/teacher/manage')
+def teacher_manage():
+    """Smart redirect to the first subject handled by the teacher."""
+    user_id = session.get('user_id')
+    if not user_id or session.get('role') != 'teacher':
+        return redirect(url_for('login'))
+    
+    from utils.helpers import get_teacher_dashboard_data
+    dashboard_data = get_teacher_dashboard_data(user_id)
+    
+    if dashboard_data['subjects']:
+        # Redirect to the first handled subject
+        first_subject = dashboard_data['subjects'][0]['short_code']
+        return redirect(url_for('teacher_subject_manage', subject_code=first_subject))
+    
+    # Fallback to dashboard if no subjects found
+    return redirect(url_for('teacher_dashboard'))
+
 @app.route('/admin/dashboard')
 def admin_dashboard():
     """Render the admin dashboard if authorized."""

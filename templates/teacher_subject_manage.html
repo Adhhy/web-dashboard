@@ -1,0 +1,512 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Subject - Attendance Management System{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* Manage Subject Page Specific Styles */
+    .page-header {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .subject-icon-box {
+        width: 64px;
+        height: 64px;
+        background: #0f49bd;
+        color: white;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: 700;
+        box-shadow: 0 4px 12px rgba(15, 73, 189, 0.2);
+    }
+
+    .subject-header-info h1 {
+        font-size: 2.25rem;
+        font-weight: 800;
+        color: var(--slate-900);
+        margin: 0;
+        letter-spacing: -0.025em;
+    }
+
+    .subject-meta {
+        display: flex;
+        gap: 1rem;
+        color: var(--slate-500);
+        font-weight: 500;
+        font-size: 1rem;
+        margin-top: 0.25rem;
+    }
+
+    .meta-item::after {
+        content: "•";
+        margin-left: 1rem;
+    }
+
+    .meta-item:last-child::after {
+        content: "";
+    }
+
+    /* Stats Grid */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 16px;
+        border: 1px solid var(--slate-100);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+    }
+
+    .stat-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .stat-icon {
+        padding: 0.625rem;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .stat-label-badge {
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--slate-400);
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--slate-900);
+        line-height: 1;
+    }
+
+    .stat-subtext {
+        font-size: 0.875rem;
+        color: var(--slate-500);
+        margin-top: 0.5rem;
+    }
+
+    .stat-trend {
+        font-size: 0.8125rem;
+        font-weight: 700;
+    }
+
+    .trend-up { color: #16a34a; }
+    .trend-down { color: #dc2626; }
+
+    /* Layout Columns */
+    .content-layout {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 2rem;
+        align-items: start;
+    }
+
+    @media (max-width: 1024px) {
+        .content-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Main Table Section */
+    .table-section {
+        background: white;
+        border-radius: 20px;
+        border: 1px solid var(--slate-100);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        overflow: hidden;
+    }
+
+    .table-header-bar {
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--slate-100);
+    }
+
+    .table-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--slate-900);
+    }
+
+    .search-input-wrapper {
+        position: relative;
+        width: 320px;
+    }
+
+    .search-input-wrapper .material-symbols-outlined {
+        position: absolute;
+        left: 0.875rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--slate-400);
+        font-size: 20px;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 0.625rem 1rem 0.625rem 2.5rem !important;
+        background-color: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 10px !important;
+        font-size: 0.875rem !important;
+    }
+
+    /* Table Styles */
+    .records-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .records-table th {
+        background: #f8fafc;
+        padding: 0.875rem 1rem;
+        text-align: left;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--slate-500);
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid var(--slate-100);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .records-table td {
+        padding: 1rem 1rem;
+        font-size: 0.875rem;
+        color: var(--slate-600);
+        border-bottom: 1px solid rgba(241, 245, 249, 0.5);
+        vertical-align: middle;
+    }
+
+    .student-id { font-weight: 600; color: var(--slate-400); }
+    .student-name { font-weight: 700; color: var(--slate-900); }
+    .stat-column { font-weight: 600; text-align: center; }
+    .percentage-column { font-weight: 800; color: var(--slate-900); }
+
+    /* Badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.25rem 0.625rem;
+        border-radius: 6px;
+        font-size: 0.6875rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+        white-space: nowrap;
+    }
+
+    .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+    }
+
+    .badge-safe { background: #f0fdf4; color: #16a34a; }
+    .badge-safe .status-dot { background-color: #16a34a; }
+
+    .badge-warning { background: #fffbeb; color: #d97706; }
+    .badge-warning .status-dot { background-color: #d97706; }
+
+    .badge-at-risk { background: #fef2f2; color: #dc2626; }
+    .badge-at-risk .status-dot { background-color: #dc2626; }
+
+    /* Sidebar - At Risk Students */
+    .sidebar-section {
+        background: #eef2f6;
+        border-radius: 20px;
+        padding: 1.5rem;
+        border: 1px solid rgba(15, 73, 189, 0.05);
+    }
+
+    .sidebar-title-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .sidebar-title-row .material-symbols-outlined {
+        color: #dc2626;
+        font-size: 24px;
+        display: flex;
+        align-items: center;
+    }
+
+    .sidebar-title {
+        font-size: 1.125rem;
+        font-weight: 800;
+        color: #991b1b;
+        line-height: 1.3;
+    }
+
+    .at-risk-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .at-risk-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.25rem;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        border-left: 4px solid #dc2626;
+    }
+
+    .at-risk-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+
+    .at-risk-name {
+        font-weight: 800;
+        color: var(--slate-900);
+        font-size: 1rem;
+    }
+
+    .at-risk-percent {
+        font-weight: 800;
+        color: #dc2626;
+        font-size: 1rem;
+    }
+
+    .at-risk-id {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--slate-400);
+        text-transform: uppercase;
+        margin-bottom: 0.75rem;
+    }
+
+    .at-risk-footer {
+        background: #f8fafc;
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--slate-500);
+    }
+
+    .at-risk-footer .material-symbols-outlined {
+        font-size: 16px;
+    }
+
+    /* Scrollable Container */
+    .table-container-scrollable {
+        max-height: 550px; /* Based on average sidebar height (Header + 3 or 4 cards) */
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-8">
+    
+    <!-- Page Header (Breadcrumb Style) -->
+    <div class="page-header">
+        <div class="subject-icon-box">
+            <span class="material-symbols-outlined" style="font-size: 32px;">code</span>
+        </div>
+        <div class="subject-header-info">
+            <h1>{{ data.subject.name }}</h1>
+            <div class="subject-meta">
+                <span class="meta-item">{{ data.subject.code }}</span>
+                <span class="meta-item">Semester {{ data.subject.sem }}</span>
+                <span class="meta-item">Faculty: {{ teacher.name }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="stats-row">
+        <!-- Classes Conducted -->
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div class="stat-icon" style="background: rgba(15, 73, 189, 0.08); color: #0f49bd;">
+                    <span class="material-symbols-outlined">library_books</span>
+                </div>
+                <span class="stat-label-badge">Active</span>
+            </div>
+            <div>
+                <div class="stat-value">{{ data.stats.total_classes }}</div>
+                <div class="stat-subtext">Total Classes Conducted</div>
+            </div>
+        </div>
+
+        <!-- Avg Attendance -->
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div class="stat-icon" style="background: rgba(34, 197, 94, 0.08); color: #16a34a;">
+                    <span class="material-symbols-outlined">trending_up</span>
+                </div>
+                <span class="stat-label-badge trend-up">Avg</span>
+            </div>
+            <div>
+                <div class="stat-value">{{ data.stats.avg_attendance }}%</div>
+                <div class="stat-subtext">Average Attendance</div>
+            </div>
+        </div>
+
+        <!-- Duty Leaves -->
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div class="stat-icon" style="background: rgba(15, 73, 189, 0.08); color: #0f49bd;">
+                    <span class="material-symbols-outlined">badge</span>
+                </div>
+                <span class="stat-label-badge">Leaves</span>
+            </div>
+            <div>
+                <div class="stat-value">{{ data.stats.total_dl }}</div>
+                <div class="stat-subtext">Total Duty Leaves</div>
+            </div>
+        </div>
+
+        <!-- Absences -->
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div class="stat-icon" style="background: rgba(220, 38, 38, 0.08); color: #dc2626;">
+                    <span class="material-symbols-outlined">warning</span>
+                </div>
+                <span class="stat-label-badge trend-down">Total</span>
+            </div>
+            <div>
+                <div class="stat-value">{{ data.stats.total_absences }}</div>
+                <div class="stat-subtext">Total Absences</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Layout -->
+    <div class="content-layout">
+        
+        <!-- Left Column: Attendance Records -->
+        <div class="table-section">
+            <div class="table-header-bar">
+                <h2 class="table-title">Attendance Records</h2>
+                <div class="search-input-wrapper">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="text" id="student-search" class="search-input" placeholder="Search by Student Name or ID" onkeyup="filterTable()">
+                </div>
+            </div>
+            <div class="overflow-x-auto table-container-scrollable">
+                <table class="records-table">
+                    <thead>
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Student Name</th>
+                            <th class="stat-column">Attended</th>
+                            <th class="stat-column">Duty Leave</th>
+                            <th class="stat-column">Total</th>
+                            <th class="stat-column">%</th>
+                            <th class="stat-column">Missed</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="records-tbody">
+                        {% for s in data.students %}
+                        {% set status_class = 'badge-safe' if s.status == 'Safe' else 'badge-warning' if s.status == 'Warning' else 'badge-at-risk' %}
+                        <tr>
+                            <td class="student-id" style="width: 100px;">{{ s.id }}</td>
+                            <td class="student-name">{{ s.name }}</td>
+                            <td class="stat-column">{{ s.attended }}</td>
+                            <td class="stat-column">{{ s.dl }}</td>
+                            <td class="stat-column">{{ s.total }}</td>
+                            <td class="stat-column percentage-column">{{ s.percent }}%</td>
+                            <td class="stat-column">{{ s.missed }}</td>
+                            <td><span class="status-badge {{ status_class }}"><span class="status-dot"></span>{{ s.status }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Right Column: Sidebar -->
+        <div class="sidebar-section">
+            <div class="sidebar-title-row">
+                <span class="material-symbols-outlined">error</span>
+                <h3 class="sidebar-title">At-Risk Students (< 75%)</h3>
+            </div>
+            
+            <div class="at-risk-list">
+                {% for s in data.at_risk %}
+                <div class="at-risk-card">
+                    <div class="at-risk-header">
+                        <span class="at-risk-name">{{ s.name }}</span>
+                        <span class="at-risk-percent">{{ s.percent }}%</span>
+                    </div>
+                    <div class="at-risk-id">ID: {{ s.id }}</div>
+                    <div class="at-risk-footer">
+                        <span class="material-symbols-outlined">calendar_today</span>
+                        {{ s.missed }} classes missed
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center p-4 text-slate-500 font-medium bg-white rounded-xl shadow-sm">
+                    No students currently at risk.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    function filterTable() {
+        const input = document.getElementById('student-search');
+        const filter = input.value.toUpperCase();
+        const tbody = document.getElementById('records-tbody');
+        const rows = tbody.getElementsByTagName('tr');
+
+        for (let i = 0; i < rows.length; i++) {
+            const idCell = rows[i].getElementsByClassName('student-id')[0];
+            const nameCell = rows[i].getElementsByClassName('student-name')[0];
+            if (idCell || nameCell) {
+                const idText = idCell.textContent || idCell.innerText;
+                const nameText = nameCell.textContent || nameCell.innerText;
+                if (idText.toUpperCase().indexOf(filter) > -1 || nameText.toUpperCase().indexOf(filter) > -1) {
+                    rows[i].style.display = "";
+                } else {
+                    rows[i].style.display = "none";
+                }
+            }
+        }
+    }
+</script>
+{% endblock %}
