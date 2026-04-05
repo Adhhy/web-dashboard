@@ -49,18 +49,18 @@
                 <nav class="hidden md:flex space-x-8 flex-1 justify-center">
                     {% if session.get('role') == 'admin' %}
                         <a class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% else %}inactive{% endif %}" href="{{ url_for('admin_dashboard') }}">Home</a>
-                        <a class="nav-link {% if request.endpoint == 'admin_duty_leave' %}active{% else %}inactive{% endif %}" href="{{ url_for('admin_duty_leave') }}">Duty Leave</a>
+                        <a class="nav-link {% if request.path == '/admin/duty-leave' %}active{% else %}inactive{% endif %}" href="/admin/duty-leave">Duty Leave</a>
                     {% elif session.get('role') == 'advisor' %}
                         <a class="nav-link {% if request.endpoint == 'advisor_dashboard' %}active{% else %}inactive{% endif %}" href="{{ url_for('advisor_dashboard') }}">Home</a>
                         <a class="nav-link {% if request.endpoint == 'advisor_manage' %}active{% else %}inactive{% endif %}" href="{{ url_for('advisor_manage') }}">Manage</a>
-                        <a class="nav-link {% if request.endpoint == 'advisor_duty_leave' %}active{% else %}inactive{% endif %}" href="{{ url_for('advisor_duty_leave') }}">Duty Leave</a>
+                        <a class="nav-link {% if request.path == '/advisor/duty-leave' %}active{% else %}inactive{% endif %}" href="/advisor/duty-leave">Duty Leave</a>
                     {% elif session.get('role') == 'teacher' %}
                         <a class="nav-link {% if request.endpoint == 'teacher_dashboard' %}active{% else %}inactive{% endif %}" href="{{ url_for('teacher_dashboard') }}">Home</a>
                         <a class="nav-link {% if request.endpoint == 'teacher_subject_manage' %}active{% else %}inactive{% endif %}" href="{{ url_for('teacher_manage') }}">Manage</a>
-                        <a class="nav-link {% if request.endpoint == 'teacher_duty_leave' %}active{% else %}inactive{% endif %}" href="{{ url_for('teacher_duty_leave') }}">Duty Leave</a>
+                        <a class="nav-link {% if request.path == '/teacher/duty-leave' %}active{% else %}inactive{% endif %}" href="/teacher/duty-leave">Duty Leave</a>
                     {% else %}
                         <a class="nav-link {% if request.endpoint in ['dashboard', 'student_dashboard'] %}active{% else %}inactive{% endif %}" href="{{ url_for('dashboard') }}">Home</a>
-                        <a class="nav-link {% if request.endpoint == 'student_duty_leave' %}active{% else %}inactive{% endif %}" href="{{ url_for('student_duty_leave') }}">Duty Leave</a>
+                        <a class="nav-link {% if request.path == '/student/duty-leave' %}active{% else %}inactive{% endif %}" href="/student/duty-leave">Duty Leave</a>
                     {% endif %}
                 </nav>
                 <!-- Right Side: Profile Dropdown -->

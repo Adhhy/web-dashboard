@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, session, redirect, url_for, jsonify, request
 from config import Config
 from auth.auth_handler import auth_bp
@@ -10,6 +11,17 @@ app.register_blueprint(attendance_bp)
 
 from routes.system_routes import system_bp
 app.register_blueprint(system_bp)
+
+# Register the Duty Leave module blueprints
+from duty_leave import duty_leave_views, duty_leave_api
+app.register_blueprint(duty_leave_views)
+app.register_blueprint(duty_leave_api)
+
+# Ensure upload directory exists
+os.makedirs(os.path.join(app.static_folder, 'uploads', 'duty_leave'), exist_ok=True)
+
+from database.schema_init import init_all_tables
+init_all_tables()
 
 @app.route('/dashboard')
 def dashboard():
@@ -54,12 +66,8 @@ def student_dashboard():
 
 @app.route('/student/duty_leave')
 def student_duty_leave():
-    """Render the student duty leave page."""
-    if 'user_id' not in session or session.get('role') != 'student':
-        return redirect(url_for('login'))
-    from utils.helpers import get_student_details
-    student = get_student_details(session.get('user_id'))
-    return render_template('student_duty_leave.html', student=student)
+    """Legacy redirect — new route handled by duty_leave module."""
+    return redirect('/student/duty-leave')
 
 
 @app.route('/advisor/dashboard')
@@ -144,13 +152,8 @@ def advisor_manage():
 
 @app.route('/advisor/duty_leave')
 def advisor_duty_leave():
-    """Render the advisor duty leave page."""
-    if 'user_id' not in session or session.get('role') != 'advisor':
-        return redirect(url_for('login'))
-    from utils.helpers import get_advisor_details, get_active_device
-    advisor = get_advisor_details(session.get('user_id'))
-    device_info = get_active_device()
-    return render_template('advisor_duty_leave.html', advisor=advisor, device_info=device_info)
+    """Legacy redirect — new route handled by duty_leave module."""
+    return redirect('/advisor/duty-leave')
 
 @app.route('/teacher/dashboard')
 def teacher_dashboard():
@@ -173,13 +176,8 @@ def teacher_dashboard():
 
 @app.route('/teacher/duty_leave')
 def teacher_duty_leave():
-    """Render the teacher duty leave page."""
-    if 'user_id' not in session or session.get('role') != 'teacher':
-        return redirect(url_for('login'))
-    from utils.helpers import get_teacher_details, get_active_device
-    teacher = get_teacher_details(session.get('user_id'))
-    device_info = get_active_device()
-    return render_template('teacher_duty_leave.html', teacher=teacher, device_info=device_info)
+    """Legacy redirect — new route handled by duty_leave module."""
+    return redirect('/teacher/duty-leave')
 
 @app.route('/teacher/subject/manage/<subject_code>')
 def teacher_subject_manage(subject_code):
@@ -230,10 +228,8 @@ def admin_dashboard():
 
 @app.route('/admin/duty_leave')
 def admin_duty_leave():
-    """Render the duty leave management for admin users."""
-    if 'user_id' not in session or session.get('role') != 'admin':
-        return redirect(url_for('login'))
-    return render_template('admin_duty_leave.html')
+    """Legacy redirect — new route handled by duty_leave module."""
+    return redirect('/admin/duty-leave')
 
 @app.route('/')
 def login():

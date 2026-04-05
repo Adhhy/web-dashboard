@@ -494,6 +494,59 @@
         font-weight: 800;
         text-transform: uppercase;
     }
+
+    .card-footer-actions {
+        padding: 1rem 1.5rem;
+        background: #fafafa;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        border-top: 1px solid var(--slate-50);
+    }
+
+    /* Search Filters */
+    .filter-section {
+        display: flex;
+        justify-content: flex-start;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .search-wrapper {
+        position: relative;
+        flex: 1;
+        max-width: 450px;
+    }
+
+    .search-input {
+        width: 100% !important;
+        padding-left: 3.5rem !important;
+        padding-top: 0.85rem;
+        padding-bottom: 0.85rem;
+        padding-right: 1rem;
+        border-radius: 14px;
+        border: 1.5px solid var(--slate-200);
+        font-family: inherit;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+        background: white;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #0f49bd;
+        box-shadow: 0 0 0 4px rgba(15, 73, 189, 0.05);
+    }
+
+    .search-wrapper .material-symbols-outlined {
+        position: absolute;
+        left: 1.25rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--slate-400);
+        font-size: 20px;
+        pointer-events: none;
+    }
 </style>
 {% endblock %}
 
@@ -534,23 +587,24 @@
             <div class="form-col">
                 <div class="form-group">
                     <label class="form-label">Subject</label>
-                    <select class="form-control">
-                        <option>Select Subject</option>
-                        <option selected>Advanced Mathematics II</option>
-                        <option>Digital Electronics</option>
-                        <option>Technical Communication</option>
+                    <select class="form-control" id="subject-select" name="subject_code" required>
+                        <option value="">Select Subject</option>
+                        {% for subj in subjects %}
+                        <option value="{{ subj.short_code or subj.code }}">{{ subj.full_name }}</option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Select Periods (Multi-select)</label>
+                    <input type="hidden" id="selected-periods" name="periods" value="">
                     <div class="period-grid">
-                        <button type="button" class="period-btn">P1</button>
-                        <button type="button" class="period-btn">P2</button>
-                        <button type="button" class="period-btn">P3</button>
-                        <button type="button" class="period-btn active">P4</button>
-                        <button type="button" class="period-btn">P5</button>
-                        <button type="button" class="period-btn">P6</button>
-                        <button type="button" class="period-btn active">P7</button>
+                        <button type="button" class="period-btn" data-period="1">P1</button>
+                        <button type="button" class="period-btn" data-period="2">P2</button>
+                        <button type="button" class="period-btn" data-period="3">P3</button>
+                        <button type="button" class="period-btn" data-period="4">P4</button>
+                        <button type="button" class="period-btn" data-period="5">P5</button>
+                        <button type="button" class="period-btn" data-period="6">P6</button>
+                        <button type="button" class="period-btn" data-period="7">P7</button>
                     </div>
                 </div>
             </div>
@@ -558,104 +612,131 @@
             <div class="form-col">
                 <div class="form-group">
                     <label class="form-label">Reason for Leave</label>
-                    <input type="text" class="form-control" placeholder="e.g. University Sports Meet" value="Sports Meet - Zonal Level">
+                    <input type="text" id="reason-input" name="reason" class="form-control" placeholder="e.g. University Sports Meet" required>
                 </div>
                 <div class="form-group" style="flex: 1;">
                     <label class="form-label">Description</label>
-                    <textarea class="form-control resize-none" rows="4" style="height: 120px; overflow-y: auto; resize: none !important;" placeholder="Enter your detailed reason here (e.g. Participation in official university event as per the attached invitation letter)."></textarea>
+                    <textarea id="desc-input" name="description" class="form-control resize-none" rows="4" style="height: 120px; overflow-y: auto; resize: none !important;" placeholder="Enter your detailed reason here."></textarea>
                 </div>
             </div>
 
             <div class="form-col">
                 <label class="form-label">Supporting Document</label>
-                <div class="upload-zone">
+                <div class="upload-zone" id="upload-zone" onclick="document.getElementById('evidence-file').click()">
                     <span class="material-symbols-outlined upload-icon">cloud_upload</span>
-                    <div class="upload-text">Drop PDF or Click to upload</div>
-                    <div class="upload-subtext">Max 2MB per file</div>
+                    <div class="upload-text" id="upload-text">Drop PDF or Click to upload</div>
+                    <div class="upload-subtext">Max 2MB — PDF, JPG, PNG</div>
+                    <input type="file" id="evidence-file" name="evidence" accept=".pdf,.jpg,.jpeg,.png" style="display:none">
                 </div>
             </div>
         </div>
 
         <div class="form-footer">
-            <button type="button" class="submit-btn" onclick="alert('Frontend stub: Submit functionality will be connected later.')">
+            <div id="submit-feedback" style="margin-right: auto; font-size: 0.875rem; font-weight: 600;"></div>
+            <button type="button" class="submit-btn" id="submit-btn" onclick="submitDutyLeaveForm()">
                 Submit Request
                 <span class="material-symbols-outlined" style="font-size: 20px;">send</span>
             </button>
+        </div>
+    </div>
+    
+    <!-- Filter Section (Shared Search UI) -->
+    <div class="filter-section">
+        <div class="search-wrapper">
+            <span class="material-symbols-outlined">search</span>
+            <input type="text" id="student-search" class="search-input" placeholder="Search by subject, reason or periods..." onkeyup="filterRequests()">
         </div>
     </div>
 
     <!-- Pending Approval -->
     <div class="section-title">
         Pending Approval
-        <span class="active-count">1 Active Request</span>
+        <span class="active-count">{{ pending_requests | length }} Active Request{{ 's' if pending_requests | length != 1 else '' }}</span>
     </div>
 
-    <div class="request-card">
-        <div class="request-card-header">
-            <div class="subj-info">
-                <div class="subj-icon">
-                    <span class="material-symbols-outlined">calculate</span>
+    {% if pending_requests %}
+        {% for req in pending_requests %}
+        <div class="request-card">
+            <div class="request-card-header">
+                <div class="subj-info">
+                    <div class="subj-icon">
+                        <span class="material-symbols-outlined">description</span>
+                    </div>
+                    <div class="subj-details">
+                        <h3>{{ req.subject_name or req.subject_code }}</h3>
+                        <p>{{ student.name if student else '' }} • ID: {{ student.ktu_id if student else '' }}</p>
+                    </div>
                 </div>
-                <div class="subj-details">
-                    <h3>Advanced Mathematics II</h3>
-                    <p>{{ student.name if student else 'ALEX JOHNSON' }} • ID: {{ student.ktu_id if student else '2024-ST-9412' }}</p>
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
+                    <div class="status-pill status-pill-{{ req.state_class }}">{{ req.state_display }}</div>
+                    {% if req.current_state == 'Locked' %}
+                    <div style="font-size: 0.65rem; font-weight: 800; color: var(--slate-400); text-transform: uppercase;">Pending Admin Override</div>
+                    {% else %}
+                    <div style="font-size: 0.65rem; font-weight: 800; color: var(--slate-400); text-transform: uppercase;">Valid until 11:59 PM today</div>
+                    {% endif %}
                 </div>
             </div>
-            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
-                <div class="status-pill status-pill-waiting">
-                    Awaiting Advisor Approval
-                </div>
-                <div style="font-size: 0.65rem; font-weight: 800; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.025em;">
-                    Admin override not available
-                </div>
-            </div>
-        </div>
 
-        <div class="details-row">
-            <div class="detail-item">
-                <label>Date</label>
-                <div class="value">Oct 24, 2023</div>
-            </div>
-            <div class="detail-item">
-                <label>Periods</label>
-                <div class="value">P1, P3, P7</div>
-            </div>
-            <div class="detail-item">
-                <label>Reason</label>
-                <div class="value">University Sports</div>
-            </div>
-            <div class="detail-item">
-                <label>Document</label>
-                <a href="#" class="doc-link">
-                    <span class="material-symbols-outlined">attach_file</span>
-                    invite_letter.pdf
-                </a>
-            </div>
-        </div>
-
-        <div class="approval-flow">
-            <div class="flow-line"></div>
-            <div class="flow-progress" style="width: 50%;"></div>
-            
-            <div class="flow-step">
-                <div class="step-circle completed">
-                    <span class="material-symbols-outlined">check</span>
+            <div class="details-row">
+                <div class="detail-item">
+                    <label>Date</label>
+                    <div class="value">{{ req.date }}</div>
                 </div>
-                <div class="step-label completed">Student</div>
+                <div class="detail-item">
+                    <label>Periods</label>
+                    <div class="value">{{ req.periods_display }}</div>
+                </div>
+                <div class="detail-item">
+                    <label>Reason</label>
+                    <div class="value">{{ req.reason }}</div>
+                </div>
+                <div class="detail-item">
+                    <label>Document</label>
+                    {% if req.evidence_path %}
+                    <a href="/static/{{ req.evidence_path }}" target="_blank" class="doc-link">
+                        <span class="material-symbols-outlined">attach_file</span>
+                        View Document
+                    </a>
+                    {% else %}
+                    <span style="color: var(--slate-400); font-size: 0.85rem;">No document</span>
+                    {% endif %}
+                </div>
             </div>
-            <div class="flow-step">
-                <div class="step-circle active"></div>
-                <div class="step-label active">Advisor</div>
+
+            <div class="approval-flow">
+                <div class="flow-line"></div>
+                <div class="flow-progress" style="width: {{ '0%' if req.current_state == 'PendingAdvisor' else ('50%' if req.current_state == 'PendingFaculty' else '100%') }};"></div>
+                <div class="flow-step">
+                    <div class="step-circle completed"><span class="material-symbols-outlined">check</span></div>
+                    <div class="step-label completed">Student</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-circle {{ 'completed' if req.advisor_status == 'Approved' else ('active' if req.current_state == 'PendingAdvisor' else '') }}">{% if req.advisor_status == 'Approved' %}<span class="material-symbols-outlined">check</span>{% endif %}</div>
+                    <div class="step-label {{ 'completed' if req.advisor_status == 'Approved' else ('active' if req.current_state == 'PendingAdvisor' else '') }}">Advisor</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-circle {{ 'active' if req.current_state == 'PendingFaculty' else '' }}"></div>
+                    <div class="step-label {{ 'active' if req.current_state == 'PendingFaculty' else '' }}">Faculty</div>
+                </div>
             </div>
-            <div class="flow-step">
-                <div class="step-circle"></div>
-                <div class="step-label">Faculty</div>
+
+            {% if req.current_state != 'Locked' %}
+            <div class="card-footer-actions">
+                <button class="delete-btn" style="background: #fef2f2; color: #dc2626; border: none; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 700; cursor:pointer; display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; transition: all 0.2s;" onclick="deleteRequest({{ req.id }}, this)">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
+                    Delete Request
+                </button>
             </div>
+            {% endif %}
         </div>
-        <div style="padding: 0 1.5rem 1.5rem; color: var(--slate-400); font-size: 0.75rem; text-align: center;">
-            Valid until 11:59 PM today
-        </div>
+        {% endfor %}
+    {% else %}
+    <div style="text-align: center; padding: 3rem; color: var(--slate-400); background: white; border-radius: 20px; border: 1px solid var(--slate-100);">
+        <span class="material-symbols-outlined" style="font-size: 48px; display: block; margin-bottom: 1rem;">task_alt</span>
+        <p style="font-weight: 700; font-size: 1rem;">No pending requests</p>
+        <p style="font-size: 0.875rem;">Submit a new request above for today's absences.</p>
     </div>
+    {% endif %}
 
     <!-- Completed Requests -->
     <div class="section-title">
@@ -663,39 +744,166 @@
         <span class="active-count" style="font-size: 0.75rem; text-transform: uppercase;">Past 30 Days</span>
     </div>
 
-    <div class="history-card">
-        <div class="history-main">
-            <div class="history-info">
-                <h4>Digital Electronics</h4>
-                <p>
-                    <span><span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">calendar_today</span>Oct 21, 2023</span>
-                    <span><span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">schedule</span>Periods: P4, P5</span>
-                    <span><span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">history</span>Processed in 4h</span>
-                </p>
+    {% if completed_requests %}
+        {% for req in completed_requests %}
+        <div class="history-card">
+            <div class="history-main">
+                <div class="history-info">
+                    <h4>{{ req.subject_name or req.subject_code }}</h4>
+                    <p>
+                        <span><span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">calendar_today</span>{{ req.date }}</span>
+                        <span><span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">schedule</span>Periods: {{ req.periods_display }}</span>
+                        <span><span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">notes</span>{{ req.reason }}</span>
+                    </p>
+                </div>
+            </div>
+            <div class="history-status">
+                <span class="badge-{{ req.state_class }}">{{ req.current_state }}</span>
+                <span class="material-symbols-outlined" style="color: var(--slate-300); margin-left: 1rem;">chevron_right</span>
             </div>
         </div>
-        <div class="history-status">
-            <span class="badge-approved">Approved</span>
-            <span class="material-symbols-outlined" style="color: var(--slate-300); margin-left: 1rem;">chevron_right</span>
-        </div>
+        {% endfor %}
+    {% else %}
+    <div style="text-align: center; padding: 2rem; color: var(--slate-400);">
+        <p style="font-size: 0.875rem;">No completed requests yet.</p>
     </div>
-
-    <div class="history-card">
-        <div class="history-main">
-            <div class="history-info">
-                <h4>Technical Communication</h4>
-                <p>
-                    <span><span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">calendar_today</span>Oct 18, 2023</span>
-                    <span><span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">schedule</span>Periods: P1-P6</span>
-                    <span style="color: #dc2626;"><span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">info</span>Insufficient document proof</span>
-                </p>
-            </div>
-        </div>
-        <div class="history-status">
-            <span class="badge-rejected">Rejected</span>
-            <span class="material-symbols-outlined" style="color: var(--slate-300); margin-left: 1rem;">chevron_right</span>
-        </div>
-    </div>
+    {% endif %}
 
 </div>
+
+<script>
+// Period Toggle Logic
+const periodBtns = document.querySelectorAll('.period-btn');
+const selectedPeriodsInput = document.getElementById('selected-periods');
+const selectedPeriods = new Set();
+
+periodBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const p = btn.dataset.period;
+        if (selectedPeriods.has(p)) {
+            selectedPeriods.delete(p);
+            btn.classList.remove('active');
+        } else {
+            selectedPeriods.add(p);
+            btn.classList.add('active');
+        }
+        selectedPeriodsInput.value = Array.from(selectedPeriods).sort().join(',');
+    });
+});
+
+// File Upload Label
+const evidenceFile = document.getElementById('evidence-file');
+const uploadText = document.getElementById('upload-text');
+if (evidenceFile) {
+    evidenceFile.addEventListener('change', () => {
+        if (evidenceFile.files.length > 0) {
+            uploadText.textContent = evidenceFile.files[0].name;
+        }
+    });
+}
+
+// AJAX Form Submit
+async function submitDutyLeaveForm() {
+    const subjectCode = document.getElementById('subject-select').value;
+    const periods = selectedPeriodsInput.value;
+    const reason = document.getElementById('reason-input').value.trim();
+    const description = document.getElementById('desc-input').value.trim();
+    const evidenceFileEl = document.getElementById('evidence-file');
+    const feedback = document.getElementById('submit-feedback');
+    const btn = document.getElementById('submit-btn');
+
+    if (!subjectCode) { feedback.textContent = '⚠ Please select a subject.'; feedback.style.color = '#dc2626'; return; }
+    if (!periods) { feedback.textContent = '⚠ Please select at least one period.'; feedback.style.color = '#dc2626'; return; }
+    if (!reason) { feedback.textContent = '⚠ Please enter a reason.'; feedback.style.color = '#dc2626'; return; }
+
+    const formData = new FormData();
+    formData.append('subject_code', subjectCode);
+    formData.append('periods', periods);
+    formData.append('reason', reason);
+    formData.append('description', description);
+    if (evidenceFileEl && evidenceFileEl.files.length > 0) {
+        formData.append('evidence', evidenceFileEl.files[0]);
+    }
+
+    btn.disabled = true;
+    feedback.textContent = 'Submitting...';
+    feedback.style.color = '#0f49bd';
+
+    try {
+        const res = await fetch('/api/duty-leave/submit', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.success) {
+            feedback.textContent = '✓ ' + data.message;
+            feedback.style.color = '#16a34a';
+            setTimeout(() => window.location.reload(), 1200);
+        } else {
+            feedback.textContent = '✗ ' + data.message;
+            feedback.style.color = '#dc2626';
+            btn.disabled = false;
+        }
+    } catch (e) {
+        feedback.textContent = '✗ Network error. Please try again.';
+        feedback.style.color = '#dc2626';
+        btn.disabled = false;
+    }
+}
+
+async function deleteRequest(requestId, btn) {
+    if (!confirm('Are you sure you want to permanently delete this duty leave request?')) return;
+    
+    btn.disabled = true;
+    const originalContent = btn.innerHTML;
+    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 18px; animation: spin 2s linear infinite;">sync</span> Deleting...';
+    
+    try {
+        const res = await fetch('/api/duty-leave/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ request_id: requestId })
+        });
+        const data = await res.json();
+        if (data.success) {
+            btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 18px;">check</span> Deleted';
+            btn.style.color = '#16a34a';
+            btn.style.background = '#f0fdf4';
+            setTimeout(() => window.location.reload(), 800);
+        } else {
+            alert('Error: ' + data.message);
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+        }
+    } catch (e) {
+        alert('Could not connect to server.');
+        btn.innerHTML = originalContent;
+        btn.disabled = false;
+    }
+}
+
+function filterRequests() {
+    const input = document.getElementById('student-search');
+    const filter = input.value.toUpperCase();
+    const cards = document.getElementsByClassName('request-card');
+    const historyCards = document.getElementsByClassName('history-card');
+
+    // Filter pending cards
+    for (let i = 0; i < cards.length; i++) {
+        const text = cards[i].innerText || cards[i].textContent;
+        if (text.toUpperCase().indexOf(filter) > -1) {
+            cards[i].style.display = "";
+        } else {
+            cards[i].style.display = "none";
+        }
+    }
+
+    // Filter history cards
+    for (let i = 0; i < historyCards.length; i++) {
+        const text = historyCards[i].innerText || historyCards[i].textContent;
+        if (text.toUpperCase().indexOf(filter) > -1) {
+            historyCards[i].style.display = "";
+        } else {
+            historyCards[i].style.display = "none";
+        }
+    }
+}
+</script>
 {% endblock %}

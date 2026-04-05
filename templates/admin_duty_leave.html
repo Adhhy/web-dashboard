@@ -455,7 +455,10 @@
             </div>
             <div class="stat-info">
                 <h4>Locked (Missed Deadline)</h4>
-                <div>24</div>
+                <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+                    <div class="stat-value" style="margin-bottom: 0;">{{ stats.locked }}</div>
+                    <div class="stat-label" style="font-weight: 700; color: var(--slate-900); font-size: 1rem;">Awaiting Override</div>
+                </div>
             </div>
         </div>
         <div class="stat-card">
@@ -464,7 +467,10 @@
             </div>
             <div class="stat-info">
                 <h4>Pending Admin Review</h4>
-                <div>08</div>
+                <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+                    <div class="stat-value" style="margin-bottom: 0;">{{ stats.locked }}</div>
+                    <div class="stat-label" style="font-weight: 700; color: var(--slate-900); font-size: 1rem;">Today</div>
+                </div>
             </div>
         </div>
         <div class="stat-card">
@@ -472,8 +478,11 @@
                 <span class="material-symbols-outlined">check_circle</span>
             </div>
             <div class="stat-info">
-                <h4>Attendance Synced</h4>
-                <div>156</div>
+                <h4>Approved Today</h4>
+                <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+                    <div class="stat-value" style="margin-bottom: 0;">{{ stats.approved }}</div>
+                    <div class="stat-label" style="font-weight: 700; color: var(--slate-900); font-size: 1rem;">Total Finalized</div>
+                </div>
             </div>
         </div>
     </div>
@@ -488,7 +497,7 @@
             <div class="filter-section">
                 <div class="search-wrapper">
                     <span class="material-symbols-outlined">search</span>
-                    <input type="text" class="search-input" placeholder="Search by student name or ID...">
+                    <input type="text" id="admin-search" class="search-input" placeholder="Search by student name or ID..." onkeyup="filterRequests()">
                 </div>
                 <div class="valid-banner" style="background: #f1f5f9; border-color: #e2e8f0; color: var(--slate-600); font-size: 0.75rem; padding: 0.5rem 1rem; border-radius: 12px; display: flex; align-items: center; gap: 0.5rem; font-weight: 700; border: 1px solid var(--slate-200);">
                     <span class="material-symbols-outlined" style="font-size: 18px; color: #0f49bd;">info</span>
@@ -499,76 +508,79 @@
             <!-- Pending Section -->
             <div class="section-title">
                 Manual Resolution Required
-                <span class="active-count">Delayed Approvals</span>
+                <span class="active-count">{{ locked_requests | length }} Delayed Approval{{ 's' if locked_requests | length != 1 else '' }}</span>
             </div>
 
-            <!-- Request Card (The "Missed Deadline" Card) -->
-            <div class="request-card" style="border-left: 4px solid #e11d48; background: #fffafb;">
-                <div class="request-card-header">
-                    <div class="subj-info">
-                        <div class="subj-icon" style="background: #fff1f2; color: #e11d48;">
-                            <span class="material-symbols-outlined">timer_off</span>
+            {% if locked_requests %}
+                {% for req in locked_requests %}
+                <div class="request-card" style="border-left: 4px solid #e11d48; background: #fffafb;">
+                    <div class="request-card-header">
+                        <div class="subj-info">
+                            <div class="subj-icon" style="background: #fff1f2; color: #e11d48;">
+                                <span class="material-symbols-outlined">timer_off</span>
+                            </div>
+                            <div class="subj-details">
+                                <h3>{{ req.student_name }}</h3>
+                                <p>ID: {{ req.ktu_id }} | {{ req.department }} &bull; {{ req.batch }}</p>
+                            </div>
                         </div>
-                        <div class="subj-details">
-                            <h3>Marcus Wright</h3>
-                            <p>ID: 21BME0455 | Mechanical • Semester 6</p>
+                        <div class="status-pill" style="background: #fff1f2; color: #e11d48; border: 1px solid #fecaca;">
+                            System Locked
                         </div>
                     </div>
-                    <div class="status-pill" style="background: #fff1f2; color: #e11d48; border: 1px solid #ffca0a;">
-                        System Locked (12:01 AM)
-                    </div>
-                </div>
 
-                <div class="details-row">
-                    <div class="detail-item">
-                        <label>Reason</label>
-                        <div class="value">Formula Student Germany</div>
-                    </div>
-                    <div class="detail-item">
-                        <label>Lock Reason</label>
-                        <div class="value" style="color: #e11d48;">Advisor Missed Deadline</div>
-                    </div>
-                    <div class="detail-item">
-                        <label>Current Step</label>
-                        <div class="value">Pending Final Review</div>
-                    </div>
-                    <div class="detail-item">
-                        <label>Action</label>
-                        <div class="value" style="color: #0f49bd;">Manual Auth</div>
-                    </div>
-                </div>
-
-                <!-- Approval Flow Timeline -->
-                <div class="approval-flow">
-                    <div class="flow-line"></div>
-                    <div class="flow-progress" style="width: 30%;"></div>
-                    
-                    <div class="flow-step">
-                        <div class="step-circle completed">
-                            <span class="material-symbols-outlined">check</span>
+                    <div class="details-row">
+                        <div class="detail-item">
+                            <label>Subject</label>
+                            <div class="value">{{ req.subject_name or req.subject_code }}</div>
                         </div>
-                        <div class="step-label completed">Student</div>
-                    </div>
-                    <div class="flow-step">
-                        <div class="step-circle" style="border-color: #e11d48; color: #e11d48;">
-                            <span class="material-symbols-outlined">close</span>
+                        <div class="detail-item">
+                            <label>Date</label>
+                            <div class="value">{{ req.date }}</div>
                         </div>
-                        <div class="step-label" style="color: #e11d48;">Advisor (Missed)</div>
+                        <div class="detail-item">
+                            <label>Reason</label>
+                            <div class="value">{{ req.reason }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <label>Lock Reason</label>
+                            <div class="value" style="color: #e11d48;">Advisor Missed Deadline</div>
+                        </div>
                     </div>
-                    <div class="flow-step">
-                        <div class="step-circle active"></div>
-                        <div class="step-label active">Admin Panel</div>
-                    </div>
-                </div>
 
-                <div class="card-footer-actions">
-                    <div class="override-note" style="color: #e11d48; font-weight: 800;">Missed Advisor Review - Proceed with Manual Resolution</div>
-                    <div class="btn-group">
-                        <button class="btn btn-secondary" style="background: #f1f5f9; color: var(--slate-600); border: none; padding: 0.6rem 1.5rem; border-radius: 12px; font-weight: 700;">Reject</button>
-                        <button class="btn btn-primary" style="padding: 0.6rem 1.5rem; border-radius: 12px; font-weight: 700; background: #e11d48; color: white; border: none; cursor: pointer;">Finalize Manual Approval</button>
+                    <div class="approval-flow">
+                        <div class="flow-line"></div>
+                        <div class="flow-progress" style="width: 30%;"></div>
+                        <div class="flow-step">
+                            <div class="step-circle completed"><span class="material-symbols-outlined">check</span></div>
+                            <div class="step-label completed">Student</div>
+                        </div>
+                        <div class="flow-step">
+                            <div class="step-circle" style="border-color: #e11d48; color: #e11d48;"><span class="material-symbols-outlined">close</span></div>
+                            <div class="step-label" style="color: #e11d48;">Advisor (Missed)</div>
+                        </div>
+                        <div class="flow-step">
+                            <div class="step-circle active"></div>
+                            <div class="step-label active">Admin Panel</div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer-actions">
+                        <div class="override-note" id="admin-feedback-{{ req.id }}" style="color: #e11d48; font-weight: 800;">Missed Advisor Review — Proceed with Manual Resolution</div>
+                        <div class="btn-group">
+                            <button class="btn btn-secondary" style="background: #f1f5f9; color: var(--slate-600); border: none; padding: 0.6rem 1.5rem; border-radius: 12px; font-weight: 700; cursor:pointer;" onclick="adminAction({{ req.id }}, 'reject', this)">Reject</button>
+                            <button class="btn btn-primary" style="padding: 0.6rem 1.5rem; border-radius: 12px; font-weight: 700; background: #e11d48; color: white; border: none; cursor: pointer;" onclick="adminAction({{ req.id }}, 'approve', this)">Finalize Manual Approval</button>
+                        </div>
                     </div>
                 </div>
+                {% endfor %}
+            {% else %}
+            <div style="text-align: center; padding: 3rem; color: var(--slate-400); background: white; border-radius: 20px; border: 1px solid var(--slate-100);">
+                <span class="material-symbols-outlined" style="font-size: 48px; display: block; margin-bottom: 1rem;">check_circle</span>
+                <p style="font-weight: 700;">No locked requests — all clear!</p>
+                <p style="font-size: 0.875rem;">All requests were processed within the deadline.</p>
             </div>
+            {% endif %}
 
             <!-- Audit Logs Section -->
             <div class="section-title">
@@ -576,22 +588,30 @@
                 <span class="active-count">Processed Overrides</span>
             </div>
 
-            <div class="history-card">
-                <div class="history-main">
-                    <div class="history-info">
-                        <h4>Arjun Malhotra (Manual Resolution)</h4>
-                        <p>
-                            <span><span class="material-symbols-outlined" style="font-size: 16px;">calendar_today</span>Today, 12:15 AM</span>
-                            <span><span class="material-symbols-outlined" style="font-size: 16px;">verified</span>Reason: Lab Report Prep</span>
-                            <span><span class="material-symbols-outlined" style="font-size: 16px;">history</span>Attendance Updated</span>
-                        </p>
+            {% if history %}
+                {% for req in history %}
+                <div class="history-card">
+                    <div class="history-main">
+                        <div class="history-info">
+                            <h4>{{ req.student_name }}</h4>
+                            <p>
+                                <span><span class="material-symbols-outlined" style="font-size: 16px;">calendar_today</span>{{ req.date }}</span>
+                                <span><span class="material-symbols-outlined" style="font-size: 16px;">school</span>{{ req.subject_name or req.subject_code }}</span>
+                                <span><span class="material-symbols-outlined" style="font-size: 16px;">schedule</span>{{ req.periods_display }}</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="history-status">
+                        <span class="badge-{{ req.state_class }}">{{ req.current_state }}</span>
+                        <span class="material-symbols-outlined" style="color: var(--slate-300); margin-left: 1rem;">chevron_right</span>
                     </div>
                 </div>
-                <div class="history-status">
-                    <span class="badge-approved">Manually Approved</span>
-                    <span class="material-symbols-outlined" style="color: var(--slate-300); margin-left: 1rem;">chevron_right</span>
-                </div>
+                {% endfor %}
+            {% else %}
+            <div style="text-align: center; padding: 2rem; color: var(--slate-400);">
+                <p style="font-size: 0.875rem;">No override history yet.</p>
             </div>
+            {% endif %}
 
         </div>
 
@@ -643,6 +663,50 @@
     </div>
 
 </div>
+
+<script>
+async function adminAction(requestId, action, btn) {
+    const feedback = document.getElementById('admin-feedback-' + requestId);
+    btn.disabled = true;
+    feedback.textContent = action === 'approve' ? 'Processing override...' : 'Rejecting...';
+    feedback.style.color = '#0f49bd';
+
+    try {
+        const res = await fetch('/api/duty-leave/admin/action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ request_id: requestId, action: action })
+        });
+        const data = await res.json();
+        if (data.success) {
+            feedback.textContent = '\u2713 ' + data.message;
+            feedback.style.color = '#16a34a';
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            feedback.textContent = '\u2717 ' + data.message;
+            feedback.style.color = '#dc2626';
+            btn.disabled = false;
+        }
+    } catch (e) {
+        feedback.textContent = '\u2717 Network error.';
+        feedback.style.color = '#dc2626';
+        btn.disabled = false;
+    }
+}
+
+function filterRequests() {
+    const input = document.getElementById('admin-search');
+    const filter = input.value.toUpperCase();
+    const cards = document.getElementsByClassName('request-card');
+
+    for (let i = 0; i < cards.length; i++) {
+        const text = cards[i].innerText || cards[i].textContent;
+        if (text.toUpperCase().indexOf(filter) > -1) {
+            cards[i].style.display = "";
+        } else {
+            cards[i].style.display = "none";
+        }
+    }
+}
+</script>
 {% endblock %}
-
-

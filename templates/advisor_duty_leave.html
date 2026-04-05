@@ -448,10 +448,6 @@
     .h-label { font-size: 0.8125rem; font-weight: 700; color: var(--slate-700); }
     .h-step.active .h-label { color: #0f49bd; }
 
-    .ov-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    .ov-card { padding: 1rem; background: #f8fafc; border-radius: 12px; text-align: center; }
-    .ov-val { font-size: 1.25rem; font-weight: 800; color: var(--slate-900); }
-    .ov-lbl { font-size: 0.6rem; font-weight: 700; color: var(--slate-400); text-transform: uppercase; margin-top: 0.25rem; }
 </style>
 {% endblock %}
 
@@ -484,7 +480,10 @@
             </div>
             <div class="stat-info">
                 <h4>Total Batch Requests</h4>
-                <div>128</div>
+                <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+                    <div class="stat-value" style="margin-bottom: 0;">{{ stats.total }}</div>
+                    <div class="stat-label" style="font-weight: 700; color: var(--slate-900); font-size: 1rem;">All Time</div>
+                </div>
             </div>
         </div>
         <div class="stat-card">
@@ -493,7 +492,10 @@
             </div>
             <div class="stat-info">
                 <h4>Pending My Review</h4>
-                <div>08</div>
+                <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+                    <div class="stat-value" style="margin-bottom: 0;">{{ stats.pending }}</div>
+                    <div class="stat-label" style="font-weight: 700; color: var(--slate-900); font-size: 1rem;">Today</div>
+                </div>
             </div>
         </div>
         <div class="stat-card">
@@ -501,8 +503,11 @@
                 <span class="material-symbols-outlined">task_alt</span>
             </div>
             <div class="stat-info">
-                <h4>Approved Today</h4>
-                <div>15</div>
+                <h4>Approved / Completed</h4>
+                <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+                    <div class="stat-value" style="margin-bottom: 0;">{{ stats.approved }}</div>
+                    <div class="stat-label" style="font-weight: 700; color: var(--slate-900); font-size: 1rem;">Total</div>
+                </div>
             </div>
         </div>
     </div>
@@ -516,204 +521,124 @@
             <div class="filter-section">
                 <div class="search-wrapper">
                     <span class="material-symbols-outlined">search</span>
-                    <input type="text" class="search-input" placeholder="Search by student name or ID...">
+                    <input type="text" id="student-search" class="search-input" placeholder="Search by student name or ID..." onkeyup="filterRequests()">
                 </div>
             </div>
 
-            <!-- Pending Section (Exact Student Style) -->
+            <!-- Pending Section -->
             <div class="section-title">
                 Pending Approval
-                <span class="active-count">3 Active Requests</span>
+                <span class="active-count">{{ pending_requests | length }} Active Request{{ 's' if pending_requests | length != 1 else '' }}</span>
             </div>
 
-            <!-- Request Card 1 (Exact Student Layout) -->
-            <div class="request-card">
-                <div class="request-card-header">
-                    <div class="subj-info">
-                        <div class="subj-icon">
-                            <span class="material-symbols-outlined">school</span>
+            {% if pending_requests %}
+                {% for req in pending_requests %}
+                <div class="request-card">
+                    <div class="request-card-header">
+                        <div class="subj-info">
+                            <div class="subj-icon">
+                                <span class="material-symbols-outlined">school</span>
+                            </div>
+                            <div class="subj-details">
+                                <h3>{{ req.student_name }}</h3>
+                                <p>ID: {{ req.ktu_id }} | {{ req.department }} &bull; {{ req.batch }}</p>
+                            </div>
                         </div>
-                        <div class="subj-details">
-                            <h3>Sarah Jennifer Williams</h3>
-                            <p>ID: 2024-ST-8890 | CSE • Semester 4</p>
-                        </div>
+                        <div class="status-pill">Awaiting Advisor Approval</div>
                     </div>
-                    <div class="status-pill">
-                        Awaiting Advisor Approval
-                    </div>
-                </div>
 
-                <div class="details-row">
-                    <div class="detail-item">
-                        <label>Date</label>
-                        <div class="value">Oct 24, 2023</div>
-                    </div>
-                    <div class="detail-item">
-                        <label>Periods</label>
-                        <div class="value">P1, P2, P3</div>
-                    </div>
-                    <div class="detail-item">
-                        <label>Reason</label>
-                        <div class="value">Inter-University Hackathon</div>
-                    </div>
-                    <div class="detail-item">
-                        <label>Document</label>
-                        <div class="value">
-                            <a href="#" style="color: #0f49bd; text-decoration: none; font-weight: 700; display: flex; align-items: center; gap: 4px;">
+                    <div class="details-row">
+                        <div class="detail-item">
+                            <label>Subject</label>
+                            <div class="value">{{ req.subject_name or req.subject_code }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <label>Periods</label>
+                            <div class="value">{{ req.periods_display }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <label>Reason</label>
+                            <div class="value">{{ req.reason }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <label>Document</label>
+                            {% if req.evidence_path %}
+                            <a href="/static/{{ req.evidence_path }}" target="_blank" style="color: #0f49bd; text-decoration: none; font-weight: 700; display: flex; align-items: center; gap: 4px;">
                                 <span class="material-symbols-outlined" style="font-size: 18px;">description</span>
-                                invite.pdf
+                                View Doc
                             </a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Approval Flow Timeline -->
-                <div class="approval-flow">
-                    <div class="flow-line"></div>
-                    <div class="flow-progress" style="width: 50%;"></div>
-                    
-                    <div class="flow-step">
-                        <div class="step-circle completed">
-                            <span class="material-symbols-outlined">check</span>
-                        </div>
-                        <div class="step-label completed">Student</div>
-                    </div>
-                    <div class="flow-step">
-                        <div class="step-circle active"></div>
-                        <div class="step-label active">Advisor</div>
-                    </div>
-                    <div class="flow-step">
-                        <div class="step-circle"></div>
-                        <div class="step-label">Faculty</div>
-                    </div>
-                </div>
-
-                <div style="padding: 0 1.5rem 0.5rem; color: var(--slate-400); font-size: 0.75rem; text-align: center; text-transform: uppercase; font-weight: 800; letter-spacing: 0.025em;">
-                    Valid until 11:59 PM today
-                </div>
-
-                <div class="card-footer-actions">
-                    <div class="override-note">Admin override not available</div>
-                    <div class="btn-group">
-                        <button class="btn btn-secondary" style="background: #f1f5f9; color: var(--slate-600); border: none; padding: 0.6rem 1.5rem; border-radius: 12px; font-weight: 700;">Reject</button>
-                        <button class="btn btn-primary" style="padding: 0.6rem 1.5rem; border-radius: 12px; font-weight: 700; background: #0f49bd; color: white; border: none; cursor: pointer;">Approve Request</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Request Card 2 -->
-            <div class="request-card">
-                <div class="request-card-header">
-                    <div class="subj-info">
-                        <div class="subj-icon">
-                            <span class="material-symbols-outlined">sports_basketball</span>
-                        </div>
-                        <div class="subj-details">
-                            <h3>Mark Thorne</h3>
-                            <p>ID: 2024-ST-1102 | ME • Semester 6</p>
-                        </div>
-                    </div>
-                    <div class="status-pill">
-                        Awaiting Advisor Approval
-                    </div>
-                </div>
-
-                <div class="details-row">
-                    <div class="detail-item">
-                        <label>Date</label>
-                        <div class="value">Oct 24, 2023</div>
-                    </div>
-                    <div class="detail-item">
-                        <label>Periods</label>
-                        <div class="value">P4 - P7</div>
-                    </div>
-                    <div class="detail-item">
-                        <label>Reason</label>
-                        <div class="value">Sports Meet - Zonal</div>
-                    </div>
-                    <div class="detail-item">
-                        <label>Document</label>
-                        <div class="value">
+                            {% else %}
                             <span style="color: var(--slate-400);">No Doc Attached</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="approval-flow">
+                        <div class="flow-line"></div>
+                        <div class="flow-progress" style="width: 33%;"></div>
+                        <div class="flow-step">
+                            <div class="step-circle completed"><span class="material-symbols-outlined">check</span></div>
+                            <div class="step-label completed">Student</div>
+                        </div>
+                        <div class="flow-step">
+                            <div class="step-circle active"></div>
+                            <div class="step-label active">Advisor</div>
+                        </div>
+                        <div class="flow-step">
+                            <div class="step-circle"></div>
+                            <div class="step-label">Faculty</div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer-actions">
+                        <div class="override-note" id="adv-feedback-{{ req.id }}"></div>
+                        <div class="btn-group">
+                            <button class="btn btn-secondary" style="background: #f1f5f9; color: var(--slate-600); border: none; padding: 0.6rem 1.5rem; border-radius: 12px; font-weight: 700; cursor:pointer;" onclick="advisorAction({{ req.id }}, 'reject', this)">Reject</button>
+                            <button class="btn btn-primary" style="padding: 0.6rem 1.5rem; border-radius: 12px; font-weight: 700; background: #0f49bd; color: white; border: none; cursor: pointer;" onclick="advisorAction({{ req.id }}, 'approve', this)">Approve Request</button>
                         </div>
                     </div>
                 </div>
-
-                <!-- Approval Flow Timeline -->
-                <div class="approval-flow">
-                    <div class="flow-line"></div>
-                    <div class="flow-progress" style="width: 50%;"></div>
-                    
-                    <div class="flow-step">
-                        <div class="step-circle completed">
-                            <span class="material-symbols-outlined">check</span>
-                        </div>
-                        <div class="step-label completed">Student</div>
-                    </div>
-                    <div class="flow-step">
-                        <div class="step-circle active"></div>
-                        <div class="step-label active">Advisor</div>
-                    </div>
-                    <div class="flow-step">
-                        <div class="step-circle"></div>
-                        <div class="step-label">Faculty</div>
-                    </div>
-                </div>
-
-                <div style="padding: 0 1.5rem 0.5rem; color: var(--slate-400); font-size: 0.75rem; text-align: center; text-transform: uppercase; font-weight: 800; letter-spacing: 0.025em;">
-                    Valid until 11:59 PM today
-                </div>
-
-                <div class="card-footer-actions">
-                    <div class="override-note">Admin override not available</div>
-                    <div class="btn-group">
-                        <button class="btn btn-secondary" style="background: #f1f5f9; color: var(--slate-600); border: none; padding: 0.6rem 1.5rem; border-radius: 12px; font-weight: 700;">Reject</button>
-                        <button class="btn btn-primary" style="padding: 0.6rem 1.5rem; border-radius: 12px; font-weight: 700; background: #0f49bd; color: white; border: none; cursor: pointer;">Approve Request</button>
-                    </div>
-                </div>
+                {% endfor %}
+            {% else %}
+            <div style="text-align: center; padding: 3rem; color: var(--slate-400); background: white; border-radius: 20px; border: 1px solid var(--slate-100);">
+                <span class="material-symbols-outlined" style="font-size: 48px; display: block; margin-bottom: 1rem;">task_alt</span>
+                <p style="font-weight: 700;">No pending requests</p>
             </div>
+            {% endif %}
 
-            <!-- Completed Requests Section (Exact Student Style) -->
+            <!-- Completed Requests Section -->
             <div class="section-title">
                 Completed Requests
                 <span class="active-count">Past 30 Days</span>
             </div>
 
-            <div class="history-card">
-                <div class="history-main">
-                    <div class="history-info">
-                        <h4>Sarah Jennifer Williams</h4>
-                        <p>
-                            <span><span class="material-symbols-outlined" style="font-size: 16px;">calendar_today</span>Oct 21, 2023</span>
-                            <span><span class="material-symbols-outlined" style="font-size: 16px;">school</span>Digital Electronics</span>
-                            <span><span class="material-symbols-outlined" style="font-size: 16px;">history</span>Processed in 2h</span>
-                        </p>
+            {% if history %}
+                {% for req in history %}
+                <div class="history-card">
+                    <div class="history-main">
+                        <div class="history-info">
+                            <h4>{{ req.student_name }}</h4>
+                            <p>
+                                <span><span class="material-symbols-outlined" style="font-size: 16px;">calendar_today</span>{{ req.date }}</span>
+                                <span><span class="material-symbols-outlined" style="font-size: 16px;">school</span>{{ req.subject_name or req.subject_code }}</span>
+                                <span><span class="material-symbols-outlined" style="font-size: 16px;">schedule</span>{{ req.periods_display }}</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="history-status">
+                        <span class="badge-{{ req.state_class }}">{{ req.current_state }}</span>
+                        <span class="material-symbols-outlined" style="color: var(--slate-300); margin-left: 1rem;">chevron_right</span>
                     </div>
                 </div>
-                <div class="history-status">
-                    <span class="badge-approved">Approved</span>
-                    <span class="material-symbols-outlined" style="color: var(--slate-300); margin-left: 1rem;">chevron_right</span>
-                </div>
+                {% endfor %}
+            {% else %}
+            <div style="text-align: center; padding: 2rem; color: var(--slate-400);">
+                <p style="font-size: 0.875rem;">No history yet.</p>
             </div>
-
-            <div class="history-card">
-                <div class="history-main">
-                    <div class="history-info">
-                        <h4>Mark Thorne</h4>
-                        <p>
-                            <span><span class="material-symbols-outlined" style="font-size: 16px;">calendar_today</span>Oct 18, 2023</span>
-                            <span><span class="material-symbols-outlined" style="font-size: 16px;">school</span>Technical Communication</span>
-                            <span style="color: #dc2626;"><span class="material-symbols-outlined" style="font-size: 16px;">info</span>Incomplete Document</span>
-                        </p>
-                    </div>
-                </div>
-                <div class="history-status">
-                    <span class="badge-rejected">Rejected</span>
-                    <span class="material-symbols-outlined" style="color: var(--slate-300); margin-left: 1rem;">chevron_right</span>
-                </div>
-            </div>
+            {% endif %}
 
         </div>
+
 
         <!-- Right Column (Sidebar Cards Kept Intact) -->
         <div class="sidebar-col">
@@ -750,26 +675,57 @@
                 </div>
             </div>
 
-            <div class="sidebar-widget">
-                <h2 class="widget-title">
-                    <span class="material-symbols-outlined" style="color: #0f49bd;">monitoring</span>
-                    Monthly Overview
-                </h2>
-                <div class="ov-grid">
-                    <div class="ov-card">
-                        <div class="ov-val">12</div>
-                        <div class="ov-lbl">Pending</div>
-                    </div>
-                    <div class="ov-card">
-                        <div class="ov-val">84</div>
-                        <div class="ov-lbl">Approved</div>
-                    </div>
-                </div>
-            </div>
 
         </div>
 
     </div>
 
-</div></div>
+</div>
+
+<script>
+async function advisorAction(requestId, action, btn) {
+    const card = btn.closest('.request-card');
+    const feedback = document.getElementById('adv-feedback-' + requestId);
+    btn.disabled = true;
+    feedback.textContent = action === 'approve' ? 'Approving...' : 'Rejecting...';
+    feedback.style.color = '#0f49bd';
+
+    try {
+        const res = await fetch('/api/duty-leave/advisor/action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ request_id: requestId, action: action })
+        });
+        const data = await res.json();
+        if (data.success) {
+            feedback.textContent = '\u2713 ' + data.message;
+            feedback.style.color = '#16a34a';
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            feedback.textContent = '\u2717 ' + data.message;
+            feedback.style.color = '#dc2626';
+            btn.disabled = false;
+        }
+    } catch (e) {
+        feedback.textContent = '\u2717 Network error.';
+        feedback.style.color = '#dc2626';
+        btn.disabled = false;
+    }
+}
+
+function filterRequests() {
+    const input = document.getElementById('student-search');
+    const filter = input.value.toUpperCase();
+    const cards = document.getElementsByClassName('request-card');
+
+    for (let i = 0; i < cards.length; i++) {
+        const text = cards[i].innerText || cards[i].textContent;
+        if (text.toUpperCase().indexOf(filter) > -1) {
+            cards[i].style.display = "";
+        } else {
+            cards[i].style.display = "none";
+        }
+    }
+}
+</script>
 {% endblock %}

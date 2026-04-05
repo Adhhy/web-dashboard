@@ -1,0 +1,169 @@
+﻿Tables: ['users', 'device_requests', 'devices', 'advisors', 'sqlite_sequence', 'sessions', 'device_commands', 'policy_logs', 'morning_attendance', 'afternoon_attendance', 'timetable', 'students', 'main_attendance', 'session_calculation_status', 'history_attendance', 'subjects', 'teachers', 'teacher_subjects', 'duty_leave_requests']
+
+-- users --
+CREATE TABLE users (
+            id INTEGER PRIMARY KEY,
+            username TEXT NOT NULL,
+            password_hash TEXT NOT NULL,
+            role TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+
+-- device_requests --
+CREATE TABLE device_requests (
+            id INTEGER PRIMARY KEY,
+            device_id TEXT NOT NULL,
+            device_name TEXT NOT NULL,
+            device_key TEXT NOT NULL,
+            ip_address TEXT,
+            status TEXT DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+
+-- devices --
+CREATE TABLE devices (
+            id INTEGER PRIMARY KEY,
+            device_id TEXT NOT NULL UNIQUE,
+            device_name TEXT NOT NULL,
+            device_key TEXT NOT NULL,
+            ip_address TEXT,
+            connection_status TEXT DEFAULT 'connected',
+            approved_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+
+-- advisors --
+CREATE TABLE advisors (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            department TEXT NOT NULL,
+            batch TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+
+-- sqlite_sequence --
+CREATE TABLE sqlite_sequence(name,seq)
+
+-- sessions --
+CREATE TABLE sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            status TEXT DEFAULT 'idle',
+            started_at TIMESTAMP,
+            stopped_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+
+-- device_commands --
+CREATE TABLE device_commands (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            device_id TEXT NOT NULL UNIQUE,
+            command TEXT DEFAULT 'idle',
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+
+-- policy_logs --
+CREATE TABLE policy_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, session_id INTEGER, device_id TEXT, student_id TEXT, student_name TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, date TEXT, event_type TEXT, period TEXT, session_type TEXT, recognition_status TEXT, late_entry BOOLEAN DEFAULT 0, bus_delay BOOLEAN DEFAULT 0, status TEXT, system_message TEXT, advisor_id INTEGER, action_timestamp DATETIME, FOREIGN KEY(session_id) REFERENCES sessions(id), FOREIGN KEY(advisor_id) REFERENCES users(id))
+
+-- morning_attendance --
+CREATE TABLE morning_attendance (student_id TEXT, date TEXT, P1 TEXT DEFAULT 'A', P2 TEXT DEFAULT 'A', P3 TEXT DEFAULT 'A', P4 TEXT DEFAULT 'A', PRIMARY KEY(student_id, date))
+
+-- afternoon_attendance --
+CREATE TABLE afternoon_attendance (student_id TEXT, date TEXT, P5 TEXT DEFAULT 'A', P6 TEXT DEFAULT 'A', P7 TEXT DEFAULT 'A', PRIMARY KEY(student_id, date))
+
+-- timetable --
+CREATE TABLE timetable (
+        day TEXT,
+        period INTEGER,
+        subject_code TEXT,
+        PRIMARY KEY (day, period)
+    )
+
+-- students --
+CREATE TABLE students (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER UNIQUE NOT NULL,
+        student_id TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        batch TEXT,
+        department TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ktu_id TEXT,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    )
+
+-- main_attendance --
+CREATE TABLE main_attendance (
+        student_id TEXT,
+        subject_code TEXT,
+        present_count INTEGER DEFAULT 0,
+        duty_leave_count INTEGER DEFAULT 0,
+        total_count INTEGER DEFAULT 0,
+        PRIMARY KEY (student_id, subject_code)
+    )
+
+-- session_calculation_status --
+CREATE TABLE session_calculation_status (
+        date TEXT,
+        session_type TEXT,
+        is_calculated INTEGER DEFAULT 0,
+        PRIMARY KEY (date, session_type)
+    )
+
+-- history_attendance --
+CREATE TABLE history_attendance (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        date TEXT,
+        student_id TEXT,
+        period TEXT,
+        status_code TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+
+-- subjects --
+CREATE TABLE subjects (
+        code TEXT PRIMARY KEY,
+        full_name TEXT NOT NULL,
+        credits INTEGER,
+        semester INTEGER,
+        subject_type TEXT,
+        short_code TEXT
+    )
+
+-- teachers --
+CREATE TABLE teachers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            department TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+
+-- teacher_subjects --
+CREATE TABLE teacher_subjects (
+            user_id INTEGER NOT NULL,
+            subject_code TEXT NOT NULL,
+            PRIMARY KEY (user_id, subject_code),
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+
+-- duty_leave_requests --
+CREATE TABLE duty_leave_requests (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id TEXT NOT NULL,
+        subject_code TEXT NOT NULL,
+        date TEXT NOT NULL,
+        periods TEXT NOT NULL,
+        reason TEXT NOT NULL,
+        description TEXT,
+        evidence_path TEXT,
+        advisor_status TEXT DEFAULT 'Pending',
+        faculty_status TEXT DEFAULT 'Pending',
+        admin_status TEXT DEFAULT 'Pending',
+        current_state TEXT DEFAULT 'PendingAdvisor',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES students(student_id),
+        FOREIGN KEY (subject_code) REFERENCES subjects(short_code)
+    )

@@ -416,10 +416,6 @@
     .h-label { font-size: 0.8125rem; font-weight: 700; color: var(--slate-700); }
     .h-step.active .h-label { color: #0f49bd; }
 
-    .ov-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    .ov-card { padding: 1rem; background: #f8fafc; border-radius: 12px; text-align: center; }
-    .ov-val { font-size: 1.25rem; font-weight: 800; color: var(--slate-900); }
-    .ov-lbl { font-size: 0.6rem; font-weight: 700; color: var(--slate-400); text-transform: uppercase; margin-top: 0.25rem; }
     .badge-approved { background: #f0fdf4; color: #16a34a; padding: 0.35rem 0.8rem; border-radius: 6px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
     .badge-rejected { background: #fef2f2; color: #dc2626; padding: 0.35rem 0.8rem; border-radius: 6px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
 </style>
@@ -453,8 +449,11 @@
                 <span class="material-symbols-outlined">subject</span>
             </div>
             <div class="stat-info">
-                <h4>Subject Wise Requests</h4>
-                <div>84</div>
+                <h4>Total Monthly Requests</h4>
+                <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+                    <div class="stat-value" style="margin-bottom: 0;">{{ stats.total }}</div>
+                    <div class="stat-label" style="font-weight: 700; color: var(--slate-900); font-size: 1rem;">Subject Wise</div>
+                </div>
             </div>
         </div>
         <div class="stat-card">
@@ -462,8 +461,11 @@
                 <span class="material-symbols-outlined">pending_actions</span>
             </div>
             <div class="stat-info">
-                <h4>Pending My Final Review</h4>
-                <div>05</div>
+                <h4>Pending Review</h4>
+                <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+                    <div class="stat-value" style="margin-bottom: 0;">{{ stats.pending }}</div>
+                    <div class="stat-label" style="font-weight: 700; color: var(--slate-900); font-size: 1rem;">Needs Action</div>
+                </div>
             </div>
         </div>
         <div class="stat-card">
@@ -472,7 +474,10 @@
             </div>
             <div class="stat-info">
                 <h4>Approved Today</h4>
-                <div>12</div>
+                <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+                    <div class="stat-value" style="margin-bottom: 0;">{{ stats.approved }}</div>
+                    <div class="stat-label" style="font-weight: 700; color: var(--slate-900); font-size: 1rem;">Total Completed</div>
+                </div>
             </div>
         </div>
     </div>
@@ -487,165 +492,86 @@
             <div class="filter-section">
                 <div class="search-wrapper">
                     <span class="material-symbols-outlined">search</span>
-                    <input type="text" class="search-input" placeholder="Search by student name or ID...">
+                    <input type="text" id="student-search" class="search-input" placeholder="Search by student name or ID..." onkeyup="filterRequests()">
                 </div>
             </div>
 
             <!-- Pending Section -->
             <div class="section-title">
-                Pending Approval
-                <span class="active-count">5 Active Requests</span>
+                Pending Final Approval
+                <span class="active-count">{{ pending_requests | length }} Active Request{{ 's' if pending_requests | length != 1 else '' }}</span>
             </div>
 
-            <!-- Request Card 1 -->
-            <div class="request-card">
-                <div class="request-card-header">
-                    <div class="subj-info">
-                        <div class="subj-icon">
-                            <span class="material-symbols-outlined">school</span>
+            {% if pending_requests %}
+                {% for req in pending_requests %}
+                <div class="request-card">
+                    <div class="request-card-header">
+                        <div class="subj-info">
+                            <div class="subj-icon">
+                                <span class="material-symbols-outlined">school</span>
+                            </div>
+                            <div class="subj-details">
+                                <h3>{{ req.student_name }}</h3>
+                                <p>ID: {{ req.ktu_id }} | {{ req.department }} &bull; {{ req.batch }}</p>
+                            </div>
                         </div>
-                        <div class="subj-details">
-                            <h3>Arjun Malhotra</h3>
-                            <p>ID: 2024-ST-0892 | CSE • Semester 6</p>
-                        </div>
+                        <div class="status-pill">Awaiting Faculty Final</div>
                     </div>
-                    <div class="status-pill">
-                        Awaiting Faculty Final
-                    </div>
-                </div>
 
-                <div class="details-row">
-                    <div class="detail-item">
-                        <label>Subject</label>
-                        <div class="value">Cloud Computing</div>
+                    <div class="details-row">
+                        <div class="detail-item">
+                            <label>Subject</label>
+                            <div class="value">{{ req.subject_name or req.subject_code }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <label>Periods</label>
+                            <div class="value">{{ req.periods_display }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <label>Reason</label>
+                            <div class="value">{{ req.reason }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <label>Advisor</label>
+                            <div class="value" style="color: #16a34a; display: flex; align-items: center; gap: 4px;">
+                                <span class="material-symbols-outlined" style="font-size: 16px;">verified</span>
+                                Approved
+                            </div>
+                        </div>
                     </div>
-                    <div class="detail-item">
-                        <label>Periods</label>
-                        <div class="value">P1, P2</div>
+
+                    <div class="approval-flow">
+                        <div class="flow-line"></div>
+                        <div class="flow-progress" style="width: 66%;"></div>
+                        <div class="flow-step">
+                            <div class="step-circle completed"><span class="material-symbols-outlined">check</span></div>
+                            <div class="step-label completed">Student</div>
+                        </div>
+                        <div class="flow-step">
+                            <div class="step-circle completed"><span class="material-symbols-outlined">check</span></div>
+                            <div class="step-label completed">Advisor</div>
+                        </div>
+                        <div class="flow-step">
+                            <div class="step-circle active"></div>
+                            <div class="step-label active">Faculty</div>
+                        </div>
                     </div>
-                    <div class="detail-item">
-                        <label>Reason</label>
-                        <div class="value">Tech Con 2024</div>
-                    </div>
-                    <div class="detail-item">
-                        <label>Advisor</label>
-                        <div class="value" style="color: #16a34a; display: flex; align-items: center; gap: 4px;">
-                            <span class="material-symbols-outlined" style="font-size: 16px;">verified</span>
-                            Approved
+
+                    <div class="card-footer-actions">
+                        <div class="override-note" id="fac-feedback-{{ req.id }}">Final Level Approval</div>
+                        <div class="btn-group">
+                            <button class="btn btn-secondary" style="background: #f1f5f9; color: var(--slate-600); border: none; padding: 0.6rem 1.5rem; border-radius: 12px; font-weight: 700; cursor:pointer;" onclick="facultyAction({{ req.id }}, 'reject', this)">Reject</button>
+                            <button class="btn btn-primary" style="padding: 0.6rem 1.5rem; border-radius: 12px; font-weight: 700; background: #0f49bd; color: white; border: none; cursor: pointer;" onclick="facultyAction({{ req.id }}, 'approve', this)">Finalize Approval</button>
                         </div>
                     </div>
                 </div>
-
-                <!-- Approval Flow Timeline -->
-                <div class="approval-flow">
-                    <div class="flow-line"></div>
-                    <div class="flow-progress" style="width: 100%;"></div>
-                    
-                    <div class="flow-step">
-                        <div class="step-circle completed">
-                            <span class="material-symbols-outlined">check</span>
-                        </div>
-                        <div class="step-label completed">Student</div>
-                    </div>
-                    <div class="flow-step">
-                        <div class="step-circle completed">
-                            <span class="material-symbols-outlined">check</span>
-                        </div>
-                        <div class="step-label completed">Advisor</div>
-                    </div>
-                    <div class="flow-step">
-                        <div class="step-circle active"></div>
-                        <div class="step-label active">Faculty</div>
-                    </div>
-                </div>
-
-                <div style="padding: 0 1.5rem 0.5rem; color: var(--slate-400); font-size: 0.75rem; text-align: center; text-transform: uppercase; font-weight: 800; letter-spacing: 0.025em;">
-                    Valid until 11:59 PM today
-                </div>
-
-                <div class="card-footer-actions">
-                    <div class="override-note">Final Level Approval</div>
-                    <div class="btn-group">
-                        <button class="btn btn-secondary" style="background: #f1f5f9; color: var(--slate-600); border: none; padding: 0.6rem 1.5rem; border-radius: 12px; font-weight: 700;">Reject</button>
-                        <button class="btn btn-primary" style="padding: 0.6rem 1.5rem; border-radius: 12px; font-weight: 700; background: #0f49bd; color: white; border: none; cursor: pointer;">Finalize Approval</button>
-                    </div>
-                </div>
+                {% endfor %}
+            {% else %}
+            <div style="text-align: center; padding: 3rem; color: var(--slate-400); background: white; border-radius: 20px; border: 1px solid var(--slate-100);">
+                <span class="material-symbols-outlined" style="font-size: 48px; display: block; margin-bottom: 1rem;">task_alt</span>
+                <p style="font-weight: 700;">No pending requests for your subjects.</p>
             </div>
-
-            <!-- Request Card 2 -->
-            <div class="request-card">
-                <div class="request-card-header">
-                    <div class="subj-info">
-                        <div class="subj-icon">
-                            <span class="material-symbols-outlined">brush</span>
-                        </div>
-                        <div class="subj-details">
-                            <h3>Lila Vance</h3>
-                            <p>ID: 2024-ST-1455 | B.Des • Semester 2</p>
-                        </div>
-                    </div>
-                    <div class="status-pill">
-                        Awaiting Faculty Final
-                    </div>
-                </div>
-
-                <div class="details-row">
-                    <div class="detail-item">
-                        <label>Subject</label>
-                        <div class="value">Art History</div>
-                    </div>
-                    <div class="detail-item">
-                        <label>Periods</label>
-                        <div class="value">P4 - P6</div>
-                    </div>
-                    <div class="detail-item">
-                        <label>Reason</label>
-                        <div class="value">Gallery Exhibition</div>
-                    </div>
-                    <div class="detail-item">
-                        <label>Advisor</label>
-                        <div class="value" style="color: #16a34a; display: flex; align-items: center; gap: 4px;">
-                            <span class="material-symbols-outlined" style="font-size: 16px;">verified</span>
-                            Approved
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Approval Flow Timeline -->
-                <div class="approval-flow">
-                    <div class="flow-line"></div>
-                    <div class="flow-progress" style="width: 100%;"></div>
-                    
-                    <div class="flow-step">
-                        <div class="step-circle completed">
-                            <span class="material-symbols-outlined">check</span>
-                        </div>
-                        <div class="step-label completed">Student</div>
-                    </div>
-                    <div class="flow-step">
-                        <div class="step-circle completed">
-                            <span class="material-symbols-outlined">check</span>
-                        </div>
-                        <div class="step-label completed">Advisor</div>
-                    </div>
-                    <div class="flow-step">
-                        <div class="step-circle active"></div>
-                        <div class="step-label active">Faculty</div>
-                    </div>
-                </div>
-
-                <div style="padding: 0 1.5rem 0.5rem; color: var(--slate-400); font-size: 0.75rem; text-align: center; text-transform: uppercase; font-weight: 800; letter-spacing: 0.025em;">
-                    Valid until 11:59 PM today
-                </div>
-
-                <div class="card-footer-actions">
-                    <div class="override-note">Final Level Approval</div>
-                    <div class="btn-group">
-                        <button class="btn btn-secondary" style="background: #f1f5f9; color: var(--slate-600); border: none; padding: 0.6rem 1.5rem; border-radius: 12px; font-weight: 700;">Reject</button>
-                        <button class="btn btn-primary" style="padding: 0.6rem 1.5rem; border-radius: 12px; font-weight: 700; background: #0f49bd; color: white; border: none; cursor: pointer;">Finalize Approval</button>
-                    </div>
-                </div>
-            </div>
+            {% endif %}
 
             <!-- Completed Requests Section -->
             <div class="section-title">
@@ -653,22 +579,30 @@
                 <span class="active-count">Past 30 Days</span>
             </div>
 
-            <div class="history-card">
-                <div class="history-main">
-                    <div class="history-info">
-                        <h4>Sarah Jennifer Williams</h4>
-                        <p>
-                            <span><span class="material-symbols-outlined" style="font-size: 16px;">calendar_today</span>Oct 21, 2023</span>
-                            <span><span class="material-symbols-outlined" style="font-size: 16px;">book</span>Network Security</span>
-                            <span><span class="material-symbols-outlined" style="font-size: 16px;">history</span>Processed in 30m</span>
-                        </p>
+            {% if history %}
+                {% for req in history %}
+                <div class="history-card">
+                    <div class="history-main">
+                        <div class="history-info">
+                            <h4>{{ req.student_name }}</h4>
+                            <p>
+                                <span><span class="material-symbols-outlined" style="font-size: 16px;">calendar_today</span>{{ req.date }}</span>
+                                <span><span class="material-symbols-outlined" style="font-size: 16px;">book</span>{{ req.subject_name or req.subject_code }}</span>
+                                <span><span class="material-symbols-outlined" style="font-size: 16px;">schedule</span>{{ req.periods_display }}</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="history-status">
+                        <span class="badge-{{ req.state_class }}">{{ req.current_state }}</span>
+                        <span class="material-symbols-outlined" style="color: var(--slate-300); margin-left: 1rem;">chevron_right</span>
                     </div>
                 </div>
-                <div class="history-status">
-                    <span class="badge-approved">Approved</span>
-                    <span class="material-symbols-outlined" style="color: var(--slate-300); margin-left: 1rem;">chevron_right</span>
-                </div>
+                {% endfor %}
+            {% else %}
+            <div style="text-align: center; padding: 2rem; color: var(--slate-400);">
+                <p style="font-size: 0.875rem;">No history yet.</p>
             </div>
+            {% endif %}
 
         </div>
 
@@ -709,26 +643,56 @@
                 </div>
             </div>
 
-            <div class="sidebar-widget">
-                <h2 class="widget-title">
-                    <span class="material-symbols-outlined" style="color: #0f49bd;">monitoring</span>
-                    Monthly Overview
-                </h2>
-                <div class="ov-grid">
-                    <div class="ov-card">
-                        <div class="ov-val">42</div>
-                        <div class="ov-lbl">Pending</div>
-                    </div>
-                    <div class="ov-card">
-                        <div class="ov-val">156</div>
-                        <div class="ov-lbl">Authorized</div>
-                    </div>
-                </div>
-            </div>
 
         </div>
 
     </div>
 
 </div>
+
+<script>
+async function facultyAction(requestId, action, btn) {
+    const feedback = document.getElementById('fac-feedback-' + requestId);
+    btn.disabled = true;
+    feedback.textContent = action === 'approve' ? 'Finalizing...' : 'Rejecting...';
+    feedback.style.color = '#0f49bd';
+
+    try {
+        const res = await fetch('/api/duty-leave/faculty/action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ request_id: requestId, action: action })
+        });
+        const data = await res.json();
+        if (data.success) {
+            feedback.textContent = '\u2713 ' + data.message;
+            feedback.style.color = '#16a34a';
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            feedback.textContent = '\u2717 ' + data.message;
+            feedback.style.color = '#dc2626';
+            btn.disabled = false;
+        }
+    } catch (e) {
+        feedback.textContent = '\u2717 Network error.';
+        feedback.style.color = '#dc2626';
+        btn.disabled = false;
+    }
+}
+
+function filterRequests() {
+    const input = document.getElementById('student-search');
+    const filter = input.value.toUpperCase();
+    const cards = document.getElementsByClassName('request-card');
+
+    for (let i = 0; i < cards.length; i++) {
+        const text = cards[i].innerText || cards[i].textContent;
+        if (text.toUpperCase().indexOf(filter) > -1) {
+            cards[i].style.display = "";
+        } else {
+            cards[i].style.display = "none";
+        }
+    }
+}
+</script>
 {% endblock %}
