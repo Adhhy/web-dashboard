@@ -1,7 +1,11 @@
 import sqlite3
 import os
+import sys
 from datetime import datetime
 from werkzeug.security import generate_password_hash
+
+# Add the project root to the python path so we can import config
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import Config
 
 def get_db_connection():
@@ -285,14 +289,17 @@ def init_all_tables():
     for row in timetable_seed:
         cursor.execute("INSERT OR REPLACE INTO timetable (day, period, subject_code) VALUES (?, ?, ?)", row)
 
-    # C. Admin User
+    # C. Basic Admin User
     cursor.execute('SELECT id FROM users WHERE username = ?', ('admin',))
     if cursor.fetchone() is None:
         pw_hash = generate_password_hash('admin123')
         cursor.execute("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)", 
                       ('admin', pw_hash, 'admin'))
 
-    # D. Hardware Session & Command Resets
+    # D. Production Accounts Seeding
+    seed_production_data(cursor)
+
+    # E. Hardware Session & Command Resets
     cursor.execute('SELECT id FROM sessions LIMIT 1')
     if cursor.fetchone() is None:
         cursor.execute("INSERT INTO sessions (status) VALUES ('idle')")
@@ -303,7 +310,124 @@ def init_all_tables():
 
     conn.commit()
     conn.close()
-    print("Database verification complete. All tables initialized.")
+    print("Database verification complete. All tables initialized and seeded.")
+
+def seed_production_data(cursor):
+    """
+    Seeding script for initializing the database with production accounts.
+    Runs automatically during app startup via init_all_tables().
+    """
+    print("Verifying production accounts...")
+
+    # --- 1. Students ---
+    # Fields: Name, Username, Password, Roll/Student_ID, KTU_ID, Dept, Batch
+    students_data = [
+        ("Adithyan S", "Adithyan S", "adithyan@123", "7", "CMA23CS007", "CSE", "2023"),
+        ("Arun PB", "Arun PB", "arunpb@123", "21", "CMA23CS021", "CSE", "2023"),
+        ("Sreehari", "Sreehari", "sreehari@123", "54", "CMA23CS056", "CSE", "2023"),
+        ("Suryadev", "Suryadev", "suryadev@123", "55", "CMA23CS057", "CSE", "2023"),
+        ("Dinil", "Dinil", "dinil@123", "26", "CMA23CS027", "CSE", "2023")
+    ]
+
+    for name, user, pw, roll, ktu, dept, batch in students_data:
+        try:
+            # Check if user already exists
+            cursor.execute("SELECT id FROM users WHERE username = ?", (user,))
+            existing_user = cursor.fetchone()
+            
+            if not existing_user:
+                pw_hash = generate_password_hash(pw)
+                cursor.execute("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)", (user, pw_hash, 'student'))
+                user_id = cursor.lastrowid
+            else:
+                user_id = existing_user[0]
+            
+            # Insert profile if not exists
+            cursor.execute("SELECT id FROM students WHERE student_id = ?", (roll,))
+            if not cursor.fetchone():
+                cursor.execute('''
+                    INSERT INTO students (user_id, student_id, ktu_id, name, department, batch)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ''', (user_id, roll, ktu, name, dept, batch))
+            
+            # Initialize cumulative attendance for all subjects in timetable
+            cursor.execute("SELECT DISTINCT subject_code FROM timetable WHERE subject_code IS NOT NULL")
+            subjects = cursor.fetchall()
+            for (subject,) in subjects:
+                cursor.execute('''
+                    INSERT OR IGNORE INTO main_attendance (student_id, subject_code, present_count, duty_leave_count, total_count)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (roll, subject, 0, 0, 0))
+        except Exception as e:
+            print(f"[ERROR] Seeding student {name}: {e}")
+
+    # --- 2. Advisor ---
+    advisor_data = ("Divya V L", "Advisor1", "advisor1@123", "CSE", "2023")
+    try:
+        name, user, pw, dept, batch = advisor_data
+        cursor.execute("SELECT id FROM users WHERE username = ?", (user,))
+        existing_user = cursor.fetchone()
+        
+        if not existing_user:
+            pw_hash = generate_password_hash(pw)
+            cursor.execute("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)", (user, pw_hash, 'advisor'))
+            user_id = cursor.lastrowid
+        else:
+            user_id = existing_user[0]
+            
+        cursor.execute("SELECT id FROM advisors WHERE user_id = ?", (user_id,))
+        if not cursor.fetchone():
+            cursor.execute('''
+                INSERT INTO advisors (user_id, name, department, batch)
+                VALUES (?, ?, ?, ?)
+            ''', (user_id, name, dept, batch))
+    except Exception as e:
+        print(f"[ERROR] Seeding advisor: {e}")
+
+    # --- 3. Admins ---
+    admins_data = [
+        ("Adithyan", "admin1@123"),
+        ("Sreehari", "admin2@123")
+    ]
+    for user, pw in admins_data:
+        try:
+            cursor.execute("SELECT id FROM users WHERE username = ?", (user,))
+            if not cursor.fetchone():
+                pw_hash = generate_password_hash(pw)
+                cursor.execute("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)", (user, pw_hash, 'admin'))
+        except Exception as e:
+            print(f"[ERROR] Seeding admin {user}: {e}")
+
+    # --- 4. Teachers ---
+    teachers_data = [
+        ("Suchitra M S", "Teacher1", "teacher1@123", "CSE", ["CD"]),
+        ("Josemary A", "Teacher2", "teacher2@123", "CSE", ["CGIP"]),
+        ("Sreeja Nair M. P", "Teacher3", "teacher3@123", "CSE", ["AAD"]),
+        ("Preethy Prabhakar", "Teacher4", "teacher4@123", "CSE", ["PE"])
+    ]
+    for name, user, pw, dept, subjects in teachers_data:
+        try:
+            cursor.execute("SELECT id FROM users WHERE username = ?", (user,))
+            existing_user = cursor.fetchone()
+            
+            if not existing_user:
+                pw_hash = generate_password_hash(pw)
+                cursor.execute("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)", (user, pw_hash, 'teacher'))
+                user_id = cursor.lastrowid
+            else:
+                user_id = existing_user[0]
+                
+            cursor.execute("SELECT id FROM teachers WHERE user_id = ?", (user_id,))
+            if not cursor.fetchone():
+                cursor.execute('''
+                    INSERT INTO teachers (user_id, name, department)
+                    VALUES (?, ?, ?)
+                ''', (user_id, name, dept))
+                
+            for subject in subjects:
+                cursor.execute("INSERT OR IGNORE INTO teacher_subjects (user_id, subject_code) VALUES (?, ?)", (user_id, subject))
+        except Exception as e:
+            print(f"[ERROR] Seeding teacher {name}: {e}")
 
 if __name__ == '__main__':
     init_all_tables()
