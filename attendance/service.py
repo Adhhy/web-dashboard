@@ -61,7 +61,14 @@ class AttendanceService:
         student_id = data.get('student_id')
         student_name = data.get('student_name', 'Unknown')
         recognition_status = data.get('recognition_status', 'Unknown')
-        event_type = data.get('event_type', 'ENTRY').upper()
+        
+        # Handle cases where the client sends the event type in the recognition_status field
+        if recognition_status.upper() in ['ENTRY', 'EXIT']:
+            event_type = recognition_status.upper()
+            # Optionally reset recognition_status if it was purely carrying the event type
+            # recognition_status = 'Success' 
+        else:
+            event_type = data.get('event_type', 'ENTRY').upper()
         late_entry = 1 if data.get('late_entry') else 0
         bus_delay = 1 if data.get('bus_delay') else 0
         
@@ -74,7 +81,7 @@ class AttendanceService:
         if late_entry or bus_delay:
             status = 'pending'
             alerts = []
-            if late_entry: alerts.append("Late entry detected")
+            if late_entry: alerts.append(f"Late {event_type.lower()} detected")
             if bus_delay: alerts.append("Bus delay reported")
             message = " ".join(alerts)
             alert_status = "Requires advisor approval"

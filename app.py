@@ -64,10 +64,6 @@ def student_dashboard():
                            total_absent=total_absent,
                            overall_percentage=overall_percentage)
 
-@app.route('/student/duty_leave')
-def student_duty_leave():
-    """Legacy redirect — new route handled by duty_leave module."""
-    return redirect('/student/duty-leave')
 
 
 @app.route('/advisor/dashboard')
@@ -150,10 +146,6 @@ def advisor_manage():
         
     return render_template('advisor_manage.html', data=data, device_info=device_info)
 
-@app.route('/advisor/duty_leave')
-def advisor_duty_leave():
-    """Legacy redirect — new route handled by duty_leave module."""
-    return redirect('/advisor/duty-leave')
 
 @app.route('/teacher/dashboard')
 def teacher_dashboard():
@@ -174,10 +166,6 @@ def teacher_dashboard():
                          teacher=teacher,
                          dashboard_data=dashboard_data)
 
-@app.route('/teacher/duty_leave')
-def teacher_duty_leave():
-    """Legacy redirect — new route handled by duty_leave module."""
-    return redirect('/teacher/duty-leave')
 
 @app.route('/teacher/subject/manage/<subject_code>')
 def teacher_subject_manage(subject_code):
@@ -226,10 +214,6 @@ def admin_dashboard():
         return redirect(url_for('login'))
     return render_template('admin_dashboard.html', username=session.get('username'), role=session.get('role'))
 
-@app.route('/admin/duty_leave')
-def admin_duty_leave():
-    """Legacy redirect — new route handled by duty_leave module."""
-    return redirect('/admin/duty-leave')
 
 @app.route('/')
 def login():
