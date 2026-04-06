@@ -391,7 +391,8 @@ def seed_production_data(cursor):
     ]
     for user, pw in admins_data:
         try:
-            cursor.execute("SELECT id FROM users WHERE username = ?", (user,))
+            # Check if this specific admin already exists
+            cursor.execute("SELECT id FROM users WHERE username = ? AND role = 'admin'", (user,))
             if not cursor.fetchone():
                 pw_hash = generate_password_hash(pw)
                 cursor.execute("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)", (user, pw_hash, 'admin'))
