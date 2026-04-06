@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from flask import Flask, render_template, session, redirect, url_for, jsonify, request
 from config import Config
 from auth.auth_handler import auth_bp
@@ -18,7 +19,8 @@ app.register_blueprint(duty_leave_views)
 app.register_blueprint(duty_leave_api)
 
 # Ensure upload directory exists
-os.makedirs(os.path.join(app.static_folder, 'uploads', 'duty_leave'), exist_ok=True)
+upload_path = Path(app.static_folder) / 'uploads' / 'duty_leave'
+upload_path.mkdir(parents=True, exist_ok=True)
 
 from database.schema_init import init_all_tables
 init_all_tables()
