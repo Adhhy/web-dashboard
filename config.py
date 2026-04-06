@@ -13,16 +13,11 @@ class Config:
     # Detect Render environment
     IS_RENDER = os.environ.get('RENDER', 'false').lower() == 'true'
     
-    # Database Path Handling
-    if IS_RENDER:
-        # Production (Render persistent disk)
-        DATA_DIR = Path('/data')
-    else:
-        # Local development
-        DATA_DIR = BASE_DIR / 'data'
+    # Database Path Handling (Render Free Tier compatible)
+    # Note: Free tier does not support persistent disks, so we use a local directory.
+    DATA_DIR = BASE_DIR / 'data'
     
     # Ensure data directory exists
-    # Note: Using try-except for environments where Path.mkdir might fail (e.g. read-only root)
     try:
         DATA_DIR.mkdir(parents=True, exist_ok=True)
     except Exception as e:
