@@ -387,7 +387,7 @@ def seed_production_data(cursor):
     # --- 3. Admins ---
     admins_data = [
         ("Adithyan", "admin1@123"),
-        ("Sreehari", "admin2@123")
+        ("Sreeharii", "admin2@123")
     ]
     for user, pw in admins_data:
         try:
